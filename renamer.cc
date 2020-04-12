@@ -178,6 +178,8 @@ uint64_t renamer::dispatch_inst(bool dest_valid, uint64_t log_reg, uint64_t phys
 	//cout<<"\n Size List   : "<<size_list;
 	assert(!(active_head==0&&active_tail==size_list-1)||(active_head==active_tail+1));
 	
+	
+	
 	if(active_tail==-1)
 	{
 		active_head=0;
@@ -208,6 +210,7 @@ uint64_t renamer::dispatch_inst(bool dest_valid, uint64_t log_reg, uint64_t phys
 	active_list[active_tail].exception=false;
 	active_list[active_tail].completed=false;
 	active_list[active_tail].value_misprediction=false;
+	active_list[active_tail].valid=true;
 	return active_tail;
 }
 
@@ -369,22 +372,12 @@ bool renamer::get_exception(uint64_t AL_index)
 
 // Stuff added newly 
 
-bool renamer::stall_skipper(uint64_t no_instruction)
+bool renamer::stall_skipper()
 {
-	int size=0;
-	if(active_head==-1)
-		size=0;
-	else if(active_head<active_tail)
-		size=active_tail-active_head+1;
+	if(SIST->flag)
+		return true;
 	else
-	{
-		size=size_list-(active_head-active_tail-1);	
-	}	
-	
-	if((size_list-size)>=no_instruction)
 		return false;
-	
-	return true;
 }
 
 void AL_padding(uint64_t no_instruction, uint64_t &head_skipper, uint64_t &tail_skipper)
@@ -411,13 +404,15 @@ void AL_padding(uint64_t no_instruction, uint64_t &head_skipper, uint64_t &tail_
 			head_skipper=active_tail;
 		}
 		flag=1;
+		active_list[active_tail].valid=false;
 	}
 	tail_skipper=active_tail;
 	
 }
 
-void create_SIST(uint64_t head_skipper, uint64_t tail_skipper, uint64_t taken, uint64_t not_taken, uint64_t diff, uint64_t reconv)
+void create_SIST(uint64_t head_skipper, uint64_t tail_skipper, uint64_t taken, uint64_t not_taken, uint64_t diff, uint64_t reconv,  uint64_t input, uint64_t output, uint64_t* inputreg_array, uint64_t* outputreg_array)
 {
+	SIST->flag=true;
 	SIST->head_of_skipper=head_skipper;
 	SIST->tail_of_skipper=tail_skipper;
 	SIST->taken_branch=taken;
@@ -427,12 +422,30 @@ void create_SIST(uint64_t head_skipper, uint64_t tail_skipper, uint64_t taken, u
 	SIST->inputreg=input;
 	SIST->outputreg=output;
 	
-	// Have a for loop for array 
-	SIST->outputreg_array
+	for(int i=0;i<SIST->inputreg;i++)
+		SIST->inputreg_array[i]=inputreg_array[i];
+	
+	for(int i=0;i<SIST->outputreg;i++)
+		SIST->outputreg_array[i]=outputreg_array[i];
 	
 	copy_state(backup,RMT);
 	
 	// Rename (assign and Store it here ) Think about stalling here if needed.
+	for(int i=0;i<SIST->outputreg;i++)
+		renamer::rename_rdst(SIST->outputreg_array[i]);
 	
+	copy_state(preassign,rmt);
 		
 }
+
+uint64_t resolve_reconvergence(bool output)
+{
+	assert(SIST->valid);
+	
+	// Pmoves
+	
+	
+
+}
+
+

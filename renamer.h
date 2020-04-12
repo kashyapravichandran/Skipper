@@ -77,7 +77,7 @@ private:
 		bool destination_flag; uint64_t logical, physical; 
 		bool completed, load_violation, branch_misprediction, value_misprediction, exception;
 		bool load_flag, store_flag, branch_flag, amo_flag, csr_flag;
-		uint64_t PC; 
+		uint64_t PC; bool valid;
 	} *active_list;
 	int active_head, active_tail;
 	
@@ -171,12 +171,14 @@ private:
 	////////////////////////////////////////////////////////////////////
 	struct SISTs
 	{
+		bool flag;
 		uint64_t head_of_skipper, tail_of_skipper;
 		uint64_t taken_branch, not_taken_branch;
 		uint64_t difficult_branch_pc, reconvergence_pc;
 		uint64_t *backup_table;
 		uint64_t *Preassign_table;
 		uint64_t inputreg, outputreg;
+		uint64_t *inputreg_array, *outputreg_array;
 	}*SIST;
 	
 	/////////////////////////////////////////////////////////////////////
@@ -552,14 +554,15 @@ public:
 	/////////////////////////////////////////////////////////////////////
 	// does the AL have enough spaces for skipping
 	/////////////////////////////////////////////////////////////////////
-	bool stall_skipper(uint64_t no_instruction);
+	bool stall_skipper();
 	
 	////////////////////////////////////////////////////////////////////
 	// Padding the active list 
 	////////////////////////////////////////////////////////////////////
 	void AL_padding(uint64_t no_instruction, uint64_t &head_skipper, uint64_t &tail_skipper);
 	
-	////////////////////////////////////////////////////////////////////
+	
+	//////////////////////////////////////////////////////////////////
 	// Creating a SIST 
 	// Temptative Argument List 
 	// 1. Head of the skipped part of AL
@@ -570,8 +573,25 @@ public:
 	// 6. Current PC 
 	// 7. Backup Table 
 	// 8. Preassign Table 
-	////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////
 	 
-	void create_SIST(uint64_t head_skipper, uint64_t tail_skipper, uint64_t taken, uint64_t not_taken, uint64_t diff, uint64_t reconv, uint64_t input, uint64_t output); // Need to add arguments here  
+	void create_SIST(uint64_t head_skipper, uint64_t tail_skipper, uint64_t taken, uint64_t not_taken, uint64_t diff, uint64_t reconv, uint64_t input, uint64_t output, uint64_t* inputreg_array, uint64_t* outputreg_array); // Need to add arguments here  
+	
+	//////////////////////////////////////////////////////////////////
+	// Resolve difficult branch
+	//////////////////////////////////////////////////////////////////  
 	 
+	////////////////////////////////////////////////////////////////// 
+	// Resolve reconvergence 
+	// Things to be done
+	// 1. Pmoves
+	// 2. Free registers 
+	// 3. send the correct PC
+	// 4. Get the branch output as argument 
+	// 5. active list tail = head of skipper 
+	//////////////////////////////////////////////////////////////////
+	
+	uint64_t resolve_reconvergence(bool output);
+	
+
 };

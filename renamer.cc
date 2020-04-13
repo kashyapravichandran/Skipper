@@ -299,7 +299,6 @@ void renamer::commit() // pop active list and push free
 	assert(active_list[active_head].exception==false);
 	assert(active_list[active_head].load_violation==false);
 	
-	
 	// see if destination is valid
 	if(active_list[active_head].destination_flag)
 	{
@@ -326,6 +325,32 @@ void renamer::commit() // pop active list and push free
 		else 
 			active_head++;
 }
+
+// -------------------------------- Check if valid bit is set in the Active List 
+
+bool renamer::AL_entry_valid()
+{
+	if(active_list[active_head].valid)
+		return true;
+	else
+		return false;
+}
+
+void fake_retire()
+{
+	while(active_list[active_head].valid==false)
+	{
+		if(active_head==active_tail)
+			active_head=active_tail=-1;
+		else if(active_head==size_list-1)
+			active_head=0;
+		else 
+			active_head++;
+	}
+}
+// -------------------------------
+
+
 
 void renamer::squash()
 {
@@ -380,7 +405,7 @@ bool renamer::stall_skipper()
 		return false;
 }
 
-void AL_padding(uint64_t no_instruction, uint64_t &head_skipper, uint64_t &tail_skipper)
+void renamer::AL_padding(uint64_t no_instruction, uint64_t &head_skipper, uint64_t &tail_skipper)
 {
 	int flag=0;
 			
@@ -410,9 +435,11 @@ void AL_padding(uint64_t no_instruction, uint64_t &head_skipper, uint64_t &tail_
 	
 }
 
-void create_SIST(uint64_t head_skipper, uint64_t tail_skipper, uint64_t taken, uint64_t not_taken, uint64_t diff, uint64_t reconv,  uint64_t input, uint64_t output, uint64_t* inputreg_array, uint64_t* outputreg_array)
+void renamer::create_SIST(uint64_t head_skipper, uint64_t tail_skipper, uint64_t taken, uint64_t not_taken, uint64_t diff, uint64_t reconv,  uint64_t input, uint64_t output, uint64_t* inputreg_array, uint64_t* outputreg_array, uint64_t num_instr)
 {
 	SIST->flag=true;
+	SIST->actual_num_instruction=0;
+	SIST->num_instruction=num_instr;
 	SIST->head_of_skipper=head_skipper;
 	SIST->tail_of_skipper=tail_skipper;
 	SIST->taken_branch=taken;
@@ -428,24 +455,118 @@ void create_SIST(uint64_t head_skipper, uint64_t tail_skipper, uint64_t taken, u
 	for(int i=0;i<SIST->outputreg;i++)
 		SIST->outputreg_array[i]=outputreg_array[i];
 	
-	copy_state(backup,RMT);
+	copy_state(SIST->backup_table,RMT);
 	
 	// Rename (assign and Store it here ) Think about stalling here if needed.
 	for(int i=0;i<SIST->outputreg;i++)
 		renamer::rename_rdst(SIST->outputreg_array[i]);
 	
-	copy_state(preassign,rmt);
+	copy_state(SIST->Preassign_table,rmt);
 		
 }
 
-uint64_t resolve_reconvergence(bool output)
+uint64_t renamer::skipper_active_list(bool dest_valid, uint64_t log_reg, uint64_t phys_reg, bool load, bool store, bool branch, bool amo, bool csr, uint64_t PC)
 {
-	assert(SIST->valid);
 	
-	// Pmoves
+	if(SIST->head_of_skipper==size_list-1)
+		SIST->head_of_skipper=0;
+	else 
+		SIST->head_of_skipper++;
+		
+	uint64_t head_of_skipper=SIST->head_of_skipper;
 	
-	
+	active_list[head_of_skipper].destination_flag=dest_valid;
+	if(active_list[head_of_skipper].destination_flag)
+	{
+		active_list[head_of_skipper].physical=phys_reg;
+		active_list[head_of_skipper].logical=log_reg;
+	}
+	active_list[head_of_skipper].branch_flag=branch;
+	active_list[head_of_skipper].amo_flag=amo;
+	active_list[head_of_skipper].load_flag=load;
+	active_list[head_of_skipper].store_flag=store;
+	active_list[head_of_skipper].csr_flag=csr;
+	active_list[head_of_skipper].PC=PC;
+	active_list[head_of_skipper].branch_misprediction=false;
+	active_list[head_of_skipper].load_violation=false;
+	active_list[head_of_skipper].exception=false;
+	active_list[head_of_skipper].completed=false;
+	active_list[head_of_skipper].value_misprediction=false;
+	active_list[head_of_skipper].valid=true;
+	SIST->actual_num_instruction++;
+	return head_of_skipper;
+}
 
+uint64_t renamer::skipper_rename_src(uint64_t log_reg)
+{
+	return SIST->backup_table[log_reg];
+}
+
+uint64_t renamer::skipper_rename_dst(uint64_t log_reg)
+{
+		// pop an element out of the queue
+	// return the element
+	assert(free.head!=-1);
+	int pos=free.head;
+	if(free.head==free.tail)
+	{
+		free.head=free.tail=-1;
+	}
+	else
+	{
+		if(free.head==(size_list-1))
+			free.head=0;
+		else 
+			free.head++;
+	}
+	
+	SIST->backup_table[log_reg]=free.list[pos];
+	//cout<<"Renamed Register : "<<free.list[pos];
+	return free.list[pos];
+}
+
+bool renamer::skipper_AL_resolve()
+{
+	if(SIST->actual_num_instruction>SIST->num_instruction)
+	{
+		// 1. Change the AL List 
+		// Check the Renamping map table 
+		active_tail=SIST->head_of_skipper;
+		for(int i=0;i<logical_size;i++)
+		{
+			if(SIST->backup_table[i]!=RMT[i])
+				{
+					uint64_t push=RMT[i];
+					if(free.tail==-1)
+						free.tail=free.head=0;
+					else if(free.tail==size_list-1)
+						free.tail=0;
+					else 
+						free.tail++;
+					free.list[free.tail]=push;
+				}
+		}
+		
+		copy_state(RMT,SIST->backup_table);	
+	return true;
+	}
+	
+	return false;
+}
+
+uint64_t* renamer::rename_logical()
+{
+	return SIST->outputreg_array;
+}
+
+uint64_t renamer::rename_skipped(uint64_t reg)
+{
+	return SIST->Preassign_table[reg];
+}
+
+uint64_t renamer::resolve_reconvergence(bool output)
+{
+	// Think we need it here but again not sure.
 }
 
 

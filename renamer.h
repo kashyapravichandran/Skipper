@@ -179,6 +179,7 @@ private:
 		uint64_t *Preassign_table;
 		uint64_t inputreg, outputreg;
 		uint64_t *inputreg_array, *outputreg_array;
+		uint64_t num_instruction, actual_num_instruction;
 	}*SIST;
 	
 	/////////////////////////////////////////////////////////////////////
@@ -551,6 +552,8 @@ public:
 	/////////////////////////////////////////////////////////////////////
 	bool get_exception(uint64_t AL_index);
 	
+	//// -------------- Stuff that I have added ------------------------
+	
 	/////////////////////////////////////////////////////////////////////
 	// does the AL have enough spaces for skipping
 	/////////////////////////////////////////////////////////////////////
@@ -575,11 +578,29 @@ public:
 	// 8. Preassign Table 
 	//////////////////////////////////////////////////////////////////
 	 
-	void create_SIST(uint64_t head_skipper, uint64_t tail_skipper, uint64_t taken, uint64_t not_taken, uint64_t diff, uint64_t reconv, uint64_t input, uint64_t output, uint64_t* inputreg_array, uint64_t* outputreg_array); // Need to add arguments here  
+	void create_SIST(uint64_t head_skipper, uint64_t tail_skipper, uint64_t taken, uint64_t not_taken, uint64_t diff, uint64_t reconv, uint64_t input, uint64_t output, uint64_t* inputreg_array, uint64_t* outputreg_array, uint64_t num_instr); // Need to add arguments here  
 	
 	//////////////////////////////////////////////////////////////////
-	// Resolve difficult branch
+	// Resolve difficult branch : Renaming the backup map table
 	//////////////////////////////////////////////////////////////////  
+		
+	uint64_t skipper_rename_src(uint64_t log_reg);
+	
+	uint64_t skipper_rename_dst(uint64_t log_reg);
+	
+	bool skipper_AL_resolve();
+
+	//////////////////////////////////////////////////////////////////
+	// Get Output Register Array for Addi
+	//////////////////////////////////////////////////////////////////  
+	
+	uint64_t* rename_logical();
+	 
+	//////////////////////////////////////////////////////////////////
+	// Get the physical register mapping for the outputregs
+	//////////////////////////////////////////////////////////////////   
+	 
+	uint64_t rename_skipped(uint64_t reg); 
 	 
 	////////////////////////////////////////////////////////////////// 
 	// Resolve reconvergence 
@@ -593,5 +614,7 @@ public:
 	
 	uint64_t resolve_reconvergence(bool output);
 	
-
+	bool AL_entry_valid();
+	
+	void fake_retire();
 };

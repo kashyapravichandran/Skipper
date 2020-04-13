@@ -617,4 +617,7 @@ public:
 	bool AL_entry_valid();
 	
 	void fake_retire();
+	
+	uint64_t skipper_active_list(bool dest_valid, uint64_t log_reg, uint64_t phys_reg, bool load, bool store, bool branch, bool amo, bool csr, uint64_t PC);
+	
 };

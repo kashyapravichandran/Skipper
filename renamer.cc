@@ -462,7 +462,7 @@ void renamer::create_SIST(uint64_t head_skipper, uint64_t tail_skipper, uint64_t
 	for(int i=0;i<SIST->outputreg;i++)
 		renamer::rename_rdst(SIST->outputreg_array[i]);
 	
-	copy_state(SIST->Preassign_table,rmt);
+	copy_state(SIST->Preassign_table,RMT);
 		
 }
 
@@ -505,7 +505,7 @@ uint64_t renamer::skipper_rename_src(uint64_t log_reg)
 
 uint64_t renamer::skipper_rename_dst(uint64_t log_reg)
 {
-		// pop an element out of the queue
+	// pop an element out of the queue
 	// return the element
 	assert(free.head!=-1);
 	int pos=free.head;

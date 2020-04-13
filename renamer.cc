@@ -298,6 +298,7 @@ void renamer::commit() // pop active list and push free
 	assert(active_list[active_head].completed==true);
 	assert(active_list[active_head].exception==false);
 	assert(active_list[active_head].load_violation==false);
+	assert(active_list[active_head].valid==false);
 	
 	// see if destination is valid
 	if(active_list[active_head].destination_flag)

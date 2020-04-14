@@ -1,11 +1,16 @@
+
 #include "pipeline.h"
 
+
+// Things we might have to add - Stall during difficult branch - Free List count 
 
 ////////////////////////////////////////////////////////////////////////////////////
 // The Rename Stage has two sub-stages:
 // rename1: Get the next rename bundle from the FQ.
 // rename2: Rename the current rename bundle.
 ////////////////////////////////////////////////////////////////////////////////////
+
+bool difficult_branch_flag = false;
 
 void pipeline_t::rename1() {
    unsigned int i;
@@ -92,6 +97,23 @@ void pipeline_t::rename2() {
    // This is achieved by doing nothing and proceeding to the next statements.
    if(REN->stall_branch(num_chkpts)) return;
    if(REN->stall_reg(num_dest_regs)) return;
+   
+   // ---- Stalling Condition added for difficult Branches  
+   
+   for(i=0;i<dispatch_width;i++)
+   {
+		index = RENAME2[i].index;
+		if(PAY.buf[index].pc==SCIT->SCIT_get_PC)
+		{
+   			if(REN->stall_skipper())
+				return;
+			if(REN->stall_reg(SCIT->SCIT_num_output()))
+				return;
+		}
+	}
+   
+   
+   // ---- 
 
 
    // Sufficient resources are available to rename the rename bundle.
@@ -112,11 +134,29 @@ void pipeline_t::rename2() {
       //    * whether or not the instruction has a destination register, and its logical register number
       // 3. When you rename a logical register to a physical register, remember to *update* the instruction's payload with the physical register specifier,
       //    so that the physical register specifier can be used in subsequent pipeline stages.
-      if(PAY.buf[index].A_valid) PAY.buf[index].A_phys_reg = REN->rename_rsrc(PAY.buf[index].A_log_reg);
-      if(PAY.buf[index].B_valid) PAY.buf[index].B_phys_reg = REN->rename_rsrc(PAY.buf[index].B_log_reg);
-      if(PAY.buf[index].D_valid) PAY.buf[index].D_phys_reg = REN->rename_rsrc(PAY.buf[index].D_log_reg);
-      if(PAY.buf[index].C_valid) PAY.buf[index].C_phys_reg = REN->rename_rdst(PAY.buf[index].C_log_reg);
-
+      if(!PAY.buf[index].skipped_type)
+	  {
+		if(PAY.buf[index].A_valid) PAY.buf[index].A_phys_reg = REN->rename_rsrc(PAY.buf[index].A_log_reg);
+      	if(PAY.buf[index].B_valid) PAY.buf[index].B_phys_reg = REN->rename_rsrc(PAY.buf[index].B_log_reg);
+      	if(PAY.buf[index].D_valid) PAY.buf[index].D_phys_reg = REN->rename_rsrc(PAY.buf[index].D_log_reg);
+      	if(PAY.buf[index].C_valid) PAY.buf[index].C_phys_reg = REN->rename_rdst(PAY.buf[index].C_log_reg);
+      }
+      else if(PAY.buf[index].skipped_type==1)
+      {
+      	if(PAY.buf[index].A_valid) PAY.buf[index].A_phys_reg = REN->skipper_rename_src(PAY.buf[index].A_log_reg);
+      	if(PAY.buf[index].B_valid) PAY.buf[index].B_phys_reg = REN->skipper_rename_src(PAY.buf[index].B_log_reg);
+      	if(PAY.buf[index].D_valid) PAY.buf[index].D_phys_reg = REN->skipper_rename_src(PAY.buf[index].D_log_reg);
+      	if(PAY.buf[index].C_valid) PAY.buf[index].C_phys_reg = REN->skipper_rename_dst(PAY.buf[index].C_log_reg);
+	  }
+	  else 
+	  {
+	  	if(PAY.buf[index].A_valid) PAY.buf[index].A_phys_reg = REN->skipper_rename_src(PAY.buf[index].A_log_reg);
+      	if(PAY.buf[index].B_valid) PAY.buf[index].B_phys_reg = REN->skipper_rename_src(PAY.buf[index].B_log_reg);
+      	if(PAY.buf[index].D_valid) PAY.buf[index].D_phys_reg = REN->skipper_rename_src(PAY.buf[index].D_log_reg);
+      	if(PAY.buf[index].C_valid) PAY.buf[index].C_phys_reg = REN->rename_skipped(PAY.buf[index].C_log_reg);
+	  }
+		
+			
 
 
       // Get the instruction's branch mask.
@@ -141,7 +181,16 @@ void pipeline_t::rename2() {
       //    so that the branch ID can be used in subsequent pipeline stages.
       if(PAY.buf[index].checkpoint && !skipper_in_progress) PAY.buf[index].branch_ID = REN->checkpoint();
       //TODO: Maybe need to use another variable to keep track of whether a checkpoint has been skipped. After that dont skip any more checkpoint creations
-
+	  
+	  
+	  // If there is a difficult branch
+	  if(PAY.buf[index].pc==SCIT->SCIT_get_PC())
+	  {
+		// Create SIST here 
+			  	
+	  	
+	  	
+	  }		
 
    }
 

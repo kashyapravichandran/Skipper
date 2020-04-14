@@ -19,4 +19,5 @@ class SCIT_table {
 	uint64_t SCIT_num_input();
 	uint64_t* SCIT_outputreg();
 	uint64_t SCIT_num_output();
+	uint64_t SCIT_rpc();
 };

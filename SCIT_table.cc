@@ -46,3 +46,8 @@ uint64_t SCIT_table::SCIT_num_output()
 {
 	return num_output;
 }
+
+uint64_t SCIT_table::SCIT_rpc()
+{
+	return RPC;
+}

@@ -436,15 +436,11 @@ void renamer::AL_padding(uint64_t no_instruction, uint64_t &head_skipper, uint64
 	
 }
 
-void renamer::create_SIST(uint64_t head_skipper, uint64_t tail_skipper, uint64_t taken, uint64_t not_taken, uint64_t diff, uint64_t reconv,  uint64_t input, uint64_t output, uint64_t* inputreg_array, uint64_t* outputreg_array, uint64_t num_instr)
+void renamer::create_SIST( uint64_t diff, uint64_t reconv,  uint64_t input, uint64_t output, uint64_t* inputreg_array, uint64_t* outputreg_array, uint64_t num_instr)
 {
 	SIST->flag=true;
 	SIST->actual_num_instruction=0;
 	SIST->num_instruction=num_instr;
-	SIST->head_of_skipper=head_skipper;
-	SIST->tail_of_skipper=tail_skipper;
-	SIST->taken_branch=taken;
-	SIST->not_taken_branch=not_taken;
 	SIST->difficult_branch_pc=diff;
 	SIST->reconvergence_pc=reconv;
 	SIST->inputreg=input;
@@ -464,6 +460,13 @@ void renamer::create_SIST(uint64_t head_skipper, uint64_t tail_skipper, uint64_t
 	
 	copy_state(SIST->Preassign_table,RMT);
 		
+}
+
+uint64_t renamer::SIST_AL_info(uint64_t head, uint64_t tail)
+{
+	SIST->head_of_skipper=head;
+	SIST->tail_of_skipper=tail;
+
 }
 
 uint64_t renamer::skipper_active_list(bool dest_valid, uint64_t log_reg, uint64_t phys_reg, bool load, bool store, bool branch, bool amo, bool csr, uint64_t PC)

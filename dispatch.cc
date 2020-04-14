@@ -34,7 +34,23 @@ void pipeline_t::dispatch() {
    // * If the Active List does not have enough entries for the *whole* dispatch bundle (which is always comprised of 'dispatch_width' instructions),
    //   then stall the Dispatch Stage. Stalling is achieved by returning from this function ('return').
    // * Else, don't stall the Dispatch Stage. This is achieved by doing nothing and proceeding to the next statements.
-   if(REN->stall_dispatch(dispatch_width)) return;
+   
+   uint32_t d_width = dispatch_width;
+   bool difficult_branch = false;
+
+   for(i=0; i<dispatch_width; i++)
+   {
+        index = DISPATCH[i].index;
+        
+        if(PAY.buf[index].pc == SCIT->SCIT_get_PC()) difficult_branch = true;
+        if(PAY.buf[index].skipped_type != 0) d_width--;
+   }
+
+   if(difficult_branch ==  true)
+   {
+    d_width += (SCIT->SCIT_get_num_instr() + SCIT->SCIT_num_output())
+   }
+   if(REN->stall_dispatch(d_width)) return;
 
 
    //
@@ -133,7 +149,21 @@ void pipeline_t::dispatch() {
       csr_flag = IS_CSR(PAY.buf[index].flags);
       unsigned int pc = PAY.buf[index].pc;
 
-      PAY.buf[index].AL_index = REN->dispatch_inst(destValid, destLogReg, destPhysReg, load_flag, store_flag, branch_flag, amo_flag, csr_flag, pc);
+   
+      if(PAY.buf[index].skipped_type == 0) //Regular instruction
+      {
+        PAY.buf[index].AL_index = REN->dispatch_inst(destValid, destLogReg, destPhysReg, load_flag, store_flag, branch_flag, amo_flag, csr_flag, pc);
+        if(PAY.buf[index].pc == SCIT->PC)
+        {
+            uint64_t s_head, s_tail;
+            REN->AL_padding(/*num insn*/, s_head, s_tail);
+            //insert s_head, s_tail into SIST
+        }
+      }
+      else //Skipped block instruction/ pmove
+      {
+        PAY.buf[index].AL_index = REN->skipper_active_list(destValid, destLogReg, destPhysReg, load_flag, store_flag, branch_flag, amo_flag, csr_flag, pc)
+      }
 
 
       // FIX_ME #8

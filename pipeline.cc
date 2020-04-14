@@ -149,6 +149,7 @@ pipeline_t::pipeline_t(
   next_fetch_cycle = 0;
 
   skipper_in_progress = false;
+  skipped_section = false;
 
   if(L2_PRESENT){
     L2C = new CacheClass( L2_SETS,

@@ -163,7 +163,7 @@ void pipeline_t::fetch() {
 
          case OP_BRANCH:
             //std::cout << std::hex << "PC: " << pc;
-            if(pc == SKIP->PC)//pc is present in SCIT
+            if(pc == SCIT->PC)//pc is present in SCIT
             {
                 next_pc = SCIT->RPC; //assuming 1 SCIT index for now.
                 skipper_in_progress = true;
@@ -188,13 +188,25 @@ void pipeline_t::fetch() {
             break;
       }
 
+      // Set payload buffer entry's next_pc and pred_tag.
+      PAY.buf[index].next_pc = next_pc;
+      PAY.buf[index].pred_tag = pred_tag;
+
+      // Latch instruction into fetch-decode pipeline register.
+      DECODE[i].valid = true;
+      DECODE[i].index = index;
+
+      // Set payload buffer entry indicating if instruction is part of skipped block or not
+      if(skipped_section) PAY.buf[index].skipped_type = 1;
+      else PAY.buf[index].skipped_type = 0;
+
       //check to see if skipped block has been completely fetched
       if(skipper_in_progress && next_pc==SCIT->RPC)
       {
         skipper_in_progress = false;
 
         //Insert pmoves
-        for(int pm=0; pm<SKIT->output_regs; pm++) //??# of pmoves == # output_regs??
+        for(int pm=0; pm<SKIT->output_regs; pm++)
         {
             //Need to figure out pmove insertions
             //index = PAY.push();
@@ -203,18 +215,11 @@ void pipeline_t::fetch() {
             //PAY.buf[index].sequence = sequence; //?
             //PAY.buf[index].fetch_exception = fetch_exception; //?
             //PAY.buf[index].fetch_exception_cause = trap_cause; //?
+            //PAY.buf[index].skipped_typr = 2; //type 2 for pmoves
         }
 
-        next_pc = /*saved pc? from SCIT/SIST?*/;
+        next_pc = future_pc; //
       }
-
-      // Set payload buffer entry's next_pc and pred_tag.
-      PAY.buf[index].next_pc = next_pc;
-      PAY.buf[index].pred_tag = pred_tag;
-
-      // Latch instruction into fetch-decode pipeline register.
-      DECODE[i].valid = true;
-      DECODE[i].index = index;
 
       // Keep count of number of fetched instructions.
       i++;

@@ -95,8 +95,18 @@ void pipeline_t::writeback(unsigned int lane_number) {
             // Branch was mispredicted.
 
             // Roll-back the fetch unit: PC and branch predictor.
+            if(PAY.buf[index].pc != SCIT->PC)
+            {
+                BP.fix_pred(PAY.buf[index].pred_tag, PAY.buf[index].c_next_pc);	// Roll-back the branch predictor to the point of the resolved branch.
+            }
+            else
+            {
+                future_pc = pc;
+                skipped_section = true;
+            }
+
             pc = PAY.buf[index].c_next_pc;					// PC gets the correct target of the resolved branch.
-            BP.fix_pred(PAY.buf[index].pred_tag, PAY.buf[index].c_next_pc);	// Roll-back the branch predictor to the point of the resolved branch.
+
  
             // Clear the fetch unit's exception, amo, and csr flags.  The fetch unit stalls on these conditions.
             // Therefore, we can infer that the mispredicted branch is logically before any offending instruction,

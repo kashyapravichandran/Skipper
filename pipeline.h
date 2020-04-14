@@ -307,6 +307,9 @@ private:
   //Skipper stuff
   SCIT_table* SCIT;
   bool skipper_in_progress;
+  bool skipped_section;
+
+  uint64_t future_pc;
 
   // 1) Fetch exception is only set by FETCH unit
   // 2) Fetch exception can be cleared by RETIRE on retiring an excepting instruction

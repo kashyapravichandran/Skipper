@@ -462,6 +462,13 @@ void renamer::create_SIST( uint64_t diff, uint64_t reconv,  uint64_t input, uint
 		
 }
 
+uint64_t renamer::SIST_AL_info(uint64_t head, uint64_t tail)
+{
+	SIST->head_of_skipper=head;
+	SIST->tail_of_skipper=tail;
+
+}
+
 uint64_t renamer::skipper_active_list(bool dest_valid, uint64_t log_reg, uint64_t phys_reg, bool load, bool store, bool branch, bool amo, bool csr, uint64_t PC)
 {
 	

@@ -580,7 +580,7 @@ public:
 	 
 	void create_SIST(uint64_t diff, uint64_t reconv, uint64_t input, uint64_t output, uint64_t* inputreg_array, uint64_t* outputreg_array, uint64_t num_instr); // Need to add arguments here  
 	
-	void SIST_AL
+	void SIST_AL_info(uint64_t head, uint64_t tail);
 	//////////////////////////////////////////////////////////////////
 	// Resolve difficult branch : Renaming the backup map table
 	//////////////////////////////////////////////////////////////////  

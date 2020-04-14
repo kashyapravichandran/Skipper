@@ -25,6 +25,7 @@
 #include "pipeline_register.h"	// PIPELINE REGISTERS
 
 #include "fetch_queue.h"	// FETCH QUEUE
+#include "SKIT_table.h"
 
 #include "renamer.h"		// REGISTER RENAMER + REGISTER FILE
 
@@ -304,6 +305,7 @@ private:
   //stats(),
 
   //Skipper stuff
+  SCIT_table* SCIT;
   bool skipper_in_progress;
 
   // 1) Fetch exception is only set by FETCH unit

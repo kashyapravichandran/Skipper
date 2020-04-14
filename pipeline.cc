@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include "parameters.h"
 #include <ctime>
+#include "SCIT_table.h"
 
 #undef STATE
 #define STATE state
@@ -178,6 +179,9 @@ pipeline_t::pipeline_t(
                         L2C);
 
   LSU.set_l2_cache(L2C);
+
+  //Init SCIT here
+  SCIT = new SCIT_table(/*uint64_t pc, uint64_t rpc, uint64_t insn, uint64_t* ipregs, uint64_t* opregs*/);
 
   /////////////////////////////////////////////////////////////
   // Pipeline register between the Fetch and Decode Stages.

@@ -125,11 +125,16 @@ void pipeline_t::fetch() {
       // Try to link the instruction to the corresponding instruction in the functional simulator.
       // NOTE: Even when NOPs are injected, successfully mapping to actual is not a problem,
       // as the NOP instructions will never be committed.
+  #if 0    
       PAY.map_to_actual(this, index, Tid);
       if (PAY.buf[index].good_instruction)
          actual = pipe->peek(PAY.buf[index].db_index);
       else
          actual = (db_t *) NULL;
+  #else
+    PAY.buf[index].good_instruction = false;
+    PAY.buf[index].db_index = DEBUG_INDEX_INVALID;
+  #endif
 
       //////////////////////////////////////////////////////
       // Set next_pc and the prediction tag.
@@ -158,9 +163,9 @@ void pipeline_t::fetch() {
 
          case OP_BRANCH:
             //std::cout << std::hex << "PC: " << pc;
-            if(//pc is present in SCIT)
+            if(pc == SKIP->PC)//pc is present in SCIT
             {
-                next_pc = //SCIT.rpc //assuming 1 SCIT index for now.
+                next_pc = SCIT->RPC; //assuming 1 SCIT index for now.
                 skipper_in_progress = true;
             }
             else
@@ -184,9 +189,22 @@ void pipeline_t::fetch() {
       }
 
       //check to see if skipped block has been completely fetched
-      if(skipper_in_progress && next_pc==/*SCIT.rpc*/)
+      if(skipper_in_progress && next_pc==SCIT->RPC)
       {
         skipper_in_progress = false;
+
+        //Insert pmoves
+        for(int pm=0; pm<SKIT->output_regs; pm++) //??# of pmoves == # output_regs??
+        {
+            //Need to figure out pmove insertions
+            //index = PAY.push();
+            //PAY.buf[index].inst = /*addi - whatever*/;
+            //PAY.buf[index].pc = /*what to use for pmove pc?*/;
+            //PAY.buf[index].sequence = sequence; //?
+            //PAY.buf[index].fetch_exception = fetch_exception; //?
+            //PAY.buf[index].fetch_exception_cause = trap_cause; //?
+        }
+
         next_pc = /*saved pc? from SCIT/SIST?*/;
       }
 

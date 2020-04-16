@@ -164,10 +164,24 @@ void pipeline_t::dispatch() {
             REN->SIST_AL_info(s_head, s_tail);
                                     	
         }
+        
+        
+        // Resolving AL Problems.
+        
+        if(finished_skipping)
+        {
+        	REN->skipper_AL_resolve();
+        	finished_skipping = false;
+		}
+		
       }
       else //Skipped block instruction/ pmove
       {
-        PAY.buf[index].AL_index = REN->skipper_active_list(destValid, destLogReg, destPhysReg, load_flag, store_flag, branch_flag, amo_flag, csr_flag, pc);
+        
+		PAY.buf[index].AL_index = REN->skipper_active_list(destValid, destLogReg, destPhysReg, load_flag, store_flag, branch_flag, amo_flag, csr_flag, pc);
+        // For that resolving stuff 
+		
+		finished_skipping = true;
       }
 
 

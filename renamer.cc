@@ -258,6 +258,24 @@ void renamer::resolve(uint64_t AL_index, uint64_t branch_ID, bool correct)
 		free.head=branch_checkpoint[branch_ID].head;
 		GBM=branch_checkpoint[branch_ID].recover_GBM;
 		copy_state(RMT, branch_checkpoint[branch_ID].MT);
+		
+		// Have two condition -- Stuff added for skipper
+		
+		if(active_head>active_tail)
+			for(int i=active_tail+1;i<active_head;i++)
+				active_list[i].valid=false;
+		else 
+		{
+			for(int i=active_tail+1;i<size_list;i++)
+				active_list[i].valid=false;
+			if(active_head!=0)
+				for(int i=0;i<active_head;i++)
+				active_list[i].valid=false;	
+		
+		}
+
+		// Stuff added for skipper
+
 	}
 	else
 	{
@@ -299,6 +317,12 @@ void renamer::commit() // pop active list and push free
 	assert(active_list[active_head].exception==false);
 	assert(active_list[active_head].load_violation==false);
 	assert(active_list[active_head].valid==false);
+	
+	// Stuff added for skipper
+	
+	active_list[active_head].valid=false;
+	
+	// Stuff added for skipper
 	
 	// see if destination is valid
 	if(active_list[active_head].destination_flag)
@@ -369,6 +393,17 @@ void renamer::squash()
 	{
 		physical_file[i].ready=true;
 	}
+	
+	
+	// Stuff added for skipper 
+	
+	for(int i=0;i<size_list;i++)
+	{
+		active_lsit[i].valid=false;
+	}
+	
+	
+	// Stuff added for skipper
 }
 
 void renamer::set_exception(uint64_t AL_index)
@@ -454,7 +489,7 @@ void renamer::create_SIST( uint64_t diff, uint64_t reconv,  uint64_t input, uint
 	
 	copy_state(SIST->backup_table,RMT);
 	
-	// Rename (assign and Store it here ) Think about stalling here if needed.
+	// Rename (assign and Store it here ) Think about stalling here if needed. - Stalling taken care of in the rename stage! 
 	for(int i=0;i<SIST->outputreg;i++)
 		renamer::rename_rdst(SIST->outputreg_array[i]);
 	
@@ -550,6 +585,8 @@ bool renamer::skipper_AL_resolve()
 					free.list[free.tail]=push;
 				}
 		}
+		
+		// Need to do clear the valid bits here 
 		
 		copy_state(RMT,SIST->backup_table);	
 	return true;

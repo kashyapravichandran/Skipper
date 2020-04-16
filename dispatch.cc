@@ -18,7 +18,7 @@ void pipeline_t::dispatch() {
    bool B_ready;
    bool D_ready;
    db_t* actual;
-
+   static bool finished_skipping = false;	
    // Stall the Dispatch Stage if either:
    // (1) There isn't a dispatch bundle.
    // (2) There aren't enough AL entries for the dispatch bundle.
@@ -151,6 +151,7 @@ void pipeline_t::dispatch() {
       csr_flag = IS_CSR(PAY.buf[index].flags);
       unsigned int pc = PAY.buf[index].pc;
 
+   		// Need to include AL resolving logic somewhere		
    
       if(PAY.buf[index].skipped_type == 0) //Regular instruction
       {
@@ -158,13 +159,15 @@ void pipeline_t::dispatch() {
         if(PAY.buf[index].pc == SCIT->PC)
         {
             uint64_t s_head, s_tail;
-            REN->AL_padding(/*num insn*/, s_head, s_tail);
+            REN->AL_padding(SCIT->SCIT_get_num_instr(), s_head, s_tail);
             //insert s_head, s_tail into SIST
+            REN->SIST_AL_info(s_head, s_tail);
+                                    	
         }
       }
       else //Skipped block instruction/ pmove
       {
-        PAY.buf[index].AL_index = REN->skipper_active_list(destValid, destLogReg, destPhysReg, load_flag, store_flag, branch_flag, amo_flag, csr_flag, pc)
+        PAY.buf[index].AL_index = REN->skipper_active_list(destValid, destLogReg, destPhysReg, load_flag, store_flag, branch_flag, amo_flag, csr_flag, pc);
       }
 
 

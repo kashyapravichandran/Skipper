@@ -11,7 +11,8 @@ void pipeline_t::fetch() {
    bool hit2;
    cycle_t resolve_cycle1;
    cycle_t resolve_cycle2;
-
+	static bool pmoves_in_progress = false; 
+	static unsigned int num_pmoves = 0;
    // Variables influencing when to terminate fetch bundle.
    unsigned int i;	// iterate up to fetch width
    bool stop;		// branch, icache block boundary, etc.
@@ -84,7 +85,7 @@ void pipeline_t::fetch() {
       //////////////////////////////////////////////////////
       // Fetch instruction -or- inject NOP for fetch stall.
       //////////////////////////////////////////////////////
-
+			
       if (fetch_exception || fetch_csr || fetch_amo) {
          // Stall the fetch unit if there is a prior unresolved fetch exception, CSR instruction, or AMO instruction.
          // A literal stall may deadlock the Rename Stage: it requires a full bundle from the FQ to progress.
@@ -95,14 +96,32 @@ void pipeline_t::fetch() {
       else {
          // Try fetching the instruction via the MMU.
          // Generate a "NOP with fetch exception" if the MMU reference generates an exception.
-         try {
-            insn = (mmu->load_insn(pc)).insn;
+         if(!pmoves_in_progress)
+		 {
+		 	try {
+            	insn = (mmu->load_insn(pc)).insn;
+         	}
+         	catch (trap_t& t) {
+          	  insn = insn_t(INSN_NOP);
+          	  set_fetch_exception();
+          	  trap_cause = t.cause();
+         	}
          }
-         catch (trap_t& t) {
-            insn = insn_t(INSN_NOP);
-            set_fetch_exception();
-            trap_cause = t.cause();
-         }
+         else 
+         {
+         	// if over here! 
+         	uint64_t *array=SCIT->SCIT_outputreg();
+			 if(num_pmoves<SCIT->SCIT_num_output())
+            {
+         		insn = (0<<19) | (array[num_pmoves]<<14) | (0 << 11) | (array[num_pmoves] << 6) | (19) ; // Immediate | Source Register | Function 3 | Destination Register | Opcode
+         		num_pmoves++;
+         		if(num_pmoves==SCIT->SCIT_num_output())
+         		{
+				 	next_pc=future_pc;
+				 	pmoves_in_progress = false;
+				}
+			}
+		 }
       }
 
       if (insn.opcode() == OP_AMO)
@@ -113,11 +132,22 @@ void pipeline_t::fetch() {
       // Put the instruction's information into PAY.
       index = PAY.push();
       PAY.buf[index].inst = insn;
-      PAY.buf[index].pc = pc;
-      PAY.buf[index].sequence = sequence;
+      
+      if(!pmoves_in_progress)
+      	PAY.buf[index].pc = pc;
+      else 
+      	PAY.buf[index].pc = 0;
+	  
+	  PAY.buf[index].sequence = sequence;
       PAY.buf[index].fetch_exception = fetch_exception;
       PAY.buf[index].fetch_exception_cause = trap_cause;
-
+     
+	  if(skipper_in_progress && !pmoves_in_progress)
+      	PAY.buf[index].skipped_type = 1;
+	  else if(!skipper_in_progress && !pmoves_in_progress)
+	  	PAY.buf[index].skipped_type = 0;
+	  else if (!skipper_in_progress && pmoves_in_progress)
+	  	PAY.buf[index].skipped_type = 2;	
       //////////////////////////////////////////////////////
       // map_to_actual()
       //////////////////////////////////////////////////////
@@ -143,51 +173,58 @@ void pipeline_t::fetch() {
       // Initialize some predictor-related flags.
       pred_tag = 0;
       history_reg = 0xFFFFFFFF;
-
-      switch (insn.opcode()) {
-         case OP_JAL:
-            direct_target = JUMP_TARGET;
-            next_pc = (PERFECT_BRANCH_PRED ?
-                          (actual ? actual->a_next_pc : direct_target) :
-                          BP.get_pred(history_reg, pc, insn, direct_target, &pred_tag, &conf, &fm));
-            assert(next_pc == direct_target);
-            stop = true;
-            break;
-
-         case OP_JALR:
-            next_pc = (PERFECT_BRANCH_PRED ?
-                          (actual ? actual->a_next_pc : INCREMENT_PC(pc)) :
-                          BP.get_pred(history_reg, pc, insn, 0, &pred_tag, &conf, &fm));
-            stop = true;
-            break;
-
-         case OP_BRANCH:
-            //std::cout << std::hex << "PC: " << pc;
-            if(pc == SCIT->PC)//pc is present in SCIT
-            {
-                next_pc = SCIT->RPC; //assuming 1 SCIT index for now.
-                skipper_in_progress = true;
-            }
-            else
-            {
-                direct_target = BRANCH_TARGET;
-                next_pc = (PERFECT_BRANCH_PRED ?
-                          (actual ? actual->a_next_pc : INCREMENT_PC(pc)) :
-                          BP.get_pred(history_reg, pc, insn, direct_target, &pred_tag, &conf, &fm));
-                assert((next_pc == direct_target) || (next_pc == INCREMENT_PC(pc)));
-            }
-            
-            //std::cout << " NextPC: " << next_pc << " Conf: " << conf << std::endl;
-            
-            if (next_pc != INCREMENT_PC(pc))
-               stop = true;
-            break;
-
-         default:
-            next_pc = INCREMENT_PC(pc);
-            break;
-      }
-
+	  if(!pmoves_in_progress)	
+      {
+	  	switch (insn.opcode()) {
+        	 case OP_JAL:
+	            direct_target = JUMP_TARGET;
+	            next_pc = (PERFECT_BRANCH_PRED ?
+	                          (actual ? actual->a_next_pc : direct_target) :
+	                          BP.get_pred(history_reg, pc, insn, direct_target, &pred_tag, &conf, &fm));
+	            assert(next_pc == direct_target);
+	            stop = true;
+	            break;
+	
+	         case OP_JALR:
+	            next_pc = (PERFECT_BRANCH_PRED ?
+	                          (actual ? actual->a_next_pc : INCREMENT_PC(pc)) :
+	                          BP.get_pred(history_reg, pc, insn, 0, &pred_tag, &conf, &fm));
+	            stop = true;
+	            break;
+	
+	         case OP_BRANCH:
+	            //std::cout << std::hex << "PC: " << pc;
+	            // stuff added for skipper
+	            
+	            if(pc == SCIT->PC)//pc is present in SCIT
+	            {
+	                next_pc = SCIT->SCIT_rpc; //assuming 1 SCIT index for now.
+	                //skipper_in_progress = true;
+	            }
+	            else
+	            {
+	                direct_target = BRANCH_TARGET;
+	                next_pc = (PERFECT_BRANCH_PRED ?
+	                          (actual ? actual->a_next_pc : INCREMENT_PC(pc)) :
+	                          BP.get_pred(history_reg, pc, insn, direct_target, &pred_tag, &conf, &fm));
+	                assert((next_pc == direct_target) || (next_pc == INCREMENT_PC(pc)));
+	            }
+	            
+	            //std::cout << " NextPC: " << next_pc << " Conf: " << conf << std::endl;
+	            
+	            if (next_pc != INCREMENT_PC(pc))
+	               stop = true;
+	            break;
+	
+	         default:
+	            next_pc = INCREMENT_PC(pc);
+	            break;
+	      }
+		}
+		else 
+		{
+			next_pc=pc;
+		}
       // Set payload buffer entry's next_pc and pred_tag.
       PAY.buf[index].next_pc = next_pc;
       PAY.buf[index].pred_tag = pred_tag;
@@ -197,17 +234,18 @@ void pipeline_t::fetch() {
       DECODE[i].index = index;
 
       // Set payload buffer entry indicating if instruction is part of skipped block or not
-      if(skipped_section) PAY.buf[index].skipped_type = 1;
-      else PAY.buf[index].skipped_type = 0;
+      //if(skipped_section) PAY.buf[index].skipped_type = 1;
+      //else PAY.buf[index].skipped_type = 0;
 
       //check to see if skipped block has been completely fetched
-      if(skipper_in_progress && next_pc==SCIT->RPC)
+      if(skipper_in_progress && next_pc==SCIT->RPC && !pmoves_in_progres)
       {
-        skipper_in_progress = false;
-
+        	skipper_in_progress = false;
+			pmoves_in_progress = true;
+	  }
         //Insert pmoves
-        for(int pm=0; pm<SKIT->output_regs; pm++)
-        {
+        //for(int pm=0; pm<SKIT->output_regs; pm++)
+        //{
             //Need to figure out pmove insertions
             //index = PAY.push();
             //PAY.buf[index].inst = /*addi - whatever*/;
@@ -216,10 +254,10 @@ void pipeline_t::fetch() {
             //PAY.buf[index].fetch_exception = fetch_exception; //?
             //PAY.buf[index].fetch_exception_cause = trap_cause; //?
             //PAY.buf[index].skipped_typr = 2; //type 2 for pmoves
-        }
-
-        next_pc = future_pc; //
-      }
+        //}
+	  	
+      //  next_pc = future_pc; //
+      //}
 
       // Keep count of number of fetched instructions.
       i++;

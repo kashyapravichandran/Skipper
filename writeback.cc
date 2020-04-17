@@ -102,7 +102,7 @@ void pipeline_t::writeback(unsigned int lane_number) {
             else
             {
                 future_pc = pc;
-                skipped_section = true;
+                skipper_in_progress = true;
             }
 
             pc = PAY.buf[index].c_next_pc;					// PC gets the correct target of the resolved branch.

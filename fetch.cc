@@ -233,9 +233,6 @@ void pipeline_t::fetch() {
       DECODE[i].valid = true;
       DECODE[i].index = index;
 
-      // Set payload buffer entry indicating if instruction is part of skipped block or not
-      //if(skipped_section) PAY.buf[index].skipped_type = 1;
-      //else PAY.buf[index].skipped_type = 0;
 
       //check to see if skipped block has been completely fetched
       if(skipper_in_progress && next_pc==SCIT->RPC && !pmoves_in_progres)
@@ -243,21 +240,6 @@ void pipeline_t::fetch() {
         	skipper_in_progress = false;
 			pmoves_in_progress = true;
 	  }
-        //Insert pmoves
-        //for(int pm=0; pm<SKIT->output_regs; pm++)
-        //{
-            //Need to figure out pmove insertions
-            //index = PAY.push();
-            //PAY.buf[index].inst = /*addi - whatever*/;
-            //PAY.buf[index].pc = /*what to use for pmove pc?*/;
-            //PAY.buf[index].sequence = sequence; //?
-            //PAY.buf[index].fetch_exception = fetch_exception; //?
-            //PAY.buf[index].fetch_exception_cause = trap_cause; //?
-            //PAY.buf[index].skipped_typr = 2; //type 2 for pmoves
-        //}
-	  	
-      //  next_pc = future_pc; //
-      //}
 
       // Keep count of number of fetched instructions.
       i++;

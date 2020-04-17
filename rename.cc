@@ -99,6 +99,8 @@ void pipeline_t::rename2() {
    if(REN->stall_reg(num_dest_regs)) return;
    
    // ---- Stalling Condition added for difficult Branches  
+   // Condition when we are bringing in pmoves and skipped instruction stall condition reduces.
+   
    
    for(i=0;i<dispatch_width;i++)
    {
@@ -179,7 +181,7 @@ void pipeline_t::rename2() {
       // 2. There is a flag in the instruction's payload that *directly* tells you if this instruction needs a checkpoint.
       // 3. If you create a checkpoint, remember to *update* the instruction's payload with its branch ID
       //    so that the branch ID can be used in subsequent pipeline stages.
-      if(PAY.buf[index].checkpoint && !skipper_in_progress) PAY.buf[index].branch_ID = REN->checkpoint();
+      if(PAY.buf[index].checkpoint && PAY.buf[index].pc!=SCIT->SCIT_get_pc()) PAY.buf[index].branch_ID = REN->checkpoint(); // PC check 
       //TODO: Maybe need to use another variable to keep track of whether a checkpoint has been skipped. After that dont skip any more checkpoint creations
 	  
 	  

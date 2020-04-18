@@ -25,7 +25,7 @@
 #include "pipeline_register.h"	// PIPELINE REGISTERS
 
 #include "fetch_queue.h"	// FETCH QUEUE
-#include "SKIT_table.h"
+#include "SCIT_table.h"
 
 #include "renamer.h"		// REGISTER RENAMER + REGISTER FILE
 

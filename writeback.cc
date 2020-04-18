@@ -95,7 +95,7 @@ void pipeline_t::writeback(unsigned int lane_number) {
             // Branch was mispredicted.
 
             // Roll-back the fetch unit: PC and branch predictor.
-            if(PAY.buf[index].pc != SCIT->PC)
+            if(PAY.buf[index].pc != SCIT->SCIT_get_PC())
             {
                 BP.fix_pred(PAY.buf[index].pred_tag, PAY.buf[index].c_next_pc);	// Roll-back the branch predictor to the point of the resolved branch.
             }

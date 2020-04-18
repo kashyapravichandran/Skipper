@@ -1,5 +1,8 @@
 #include <inttypes.h>
 
+#ifndef _SCIT_table_H_
+#define _SCIT_table_h_
+
 class SCIT_table {
 
     uint64_t PC;
@@ -21,3 +24,4 @@ class SCIT_table {
 	uint64_t SCIT_num_output();
 	uint64_t SCIT_rpc();
 };
+#endif 

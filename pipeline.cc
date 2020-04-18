@@ -18,7 +18,7 @@
 #include <sys/stat.h>
 #include "parameters.h"
 #include <ctime>
-#include "SCIT_table.h"
+//#include "SCIT_table.h"
 
 #undef STATE
 #define STATE state

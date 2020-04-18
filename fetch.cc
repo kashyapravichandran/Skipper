@@ -196,9 +196,9 @@ void pipeline_t::fetch() {
 	            //std::cout << std::hex << "PC: " << pc;
 	            // stuff added for skipper
 	            
-	            if(pc == SCIT->PC)//pc is present in SCIT
+	            if(pc == SCIT->SCIT_get_PC())//pc is present in SCIT
 	            {
-	                next_pc = SCIT->SCIT_rpc; //assuming 1 SCIT index for now.
+	                next_pc = SCIT->SCIT_rpc() //assuming 1 SCIT index for now.
 	                //skipper_in_progress = true;
 	            }
 	            else

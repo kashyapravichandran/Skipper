@@ -361,7 +361,7 @@ bool renamer::AL_entry_valid()
 		return false;
 }
 
-void fake_retire()
+void renamer::fake_retire()
 {
 	while(active_list[active_head].valid==false)
 	{
@@ -399,7 +399,7 @@ void renamer::squash()
 	
 	for(int i=0;i<size_list;i++)
 	{
-		active_lsit[i].valid=false;
+		active_list[i].valid=false;
 	}
 	
 	
@@ -497,7 +497,7 @@ void renamer::create_SIST( uint64_t diff, uint64_t reconv,  uint64_t input, uint
 		
 }
 
-uint64_t renamer::SIST_AL_info(uint64_t head, uint64_t tail)
+void renamer::SIST_AL_info(uint64_t head, uint64_t tail)
 {
 	SIST->head_of_skipper=head;
 	SIST->tail_of_skipper=tail;

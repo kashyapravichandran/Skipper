@@ -316,7 +316,7 @@ void renamer::commit() // pop active list and push free
 	assert(active_list[active_head].completed==true);
 	assert(active_list[active_head].exception==false);
 	assert(active_list[active_head].load_violation==false);
-	assert(active_list[active_head].valid==false);
+	assert(active_list[active_head].valid==true);
 	
 	// Stuff added for skipper
 	

@@ -48,8 +48,10 @@ void pipeline_t::retire(size_t& instret) {
    //      is squashed including the offending instruction.
 	head_valid=REN->precommit(completed, exception, load_viol, br_misp, val_misp, load, store, branch,amo, csr, offending_PC);
 	if(head_valid&&!REN->AL_entry_valid())
+	{
 		REN->fake_retire();	
-	
+		head_valid=REN->precommit(completed, exception, load_viol, br_misp, val_misp, load, store, branch,amo, csr, offending_PC);
+	}
 	
 
 

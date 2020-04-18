@@ -198,7 +198,7 @@ void pipeline_t::fetch() {
 	            
 	            if(pc == SCIT->SCIT_get_PC())//pc is present in SCIT
 	            {
-	                next_pc = SCIT->SCIT_rpc() //assuming 1 SCIT index for now.
+	                next_pc = SCIT->SCIT_rpc(); //assuming 1 SCIT index for now.
 	                //skipper_in_progress = true;
 	            }
 	            else
@@ -235,7 +235,7 @@ void pipeline_t::fetch() {
 
 
       //check to see if skipped block has been completely fetched
-      if(skipper_in_progress && next_pc==SCIT->SCIT_rpc && !pmoves_in_progress)
+      if(skipper_in_progress && next_pc==SCIT->SCIT_rpc() && !pmoves_in_progress)
       {
         	skipper_in_progress = false;
 			pmoves_in_progress = true;

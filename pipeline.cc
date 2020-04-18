@@ -183,8 +183,8 @@ pipeline_t::pipeline_t(
 	
  //Init SCIT here
  uint64_t ipnum = 1, opnum = 1 ;
- uint64_t* ip = new int[ipnum];
- uint64_t* op = new int [opnum];
+ uint64_t* ip = new uint64_t [ipnum];
+ uint64_t* op = new uint64_t [opnum];
  ip[0]=1;
  op[0]=1; 
   

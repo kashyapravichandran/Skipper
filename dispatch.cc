@@ -50,7 +50,7 @@ void pipeline_t::dispatch() {
 
    if(difficult_branch ==  true)
    {
-    d_width += (SCIT->SCIT_get_num_instr() + SCIT->SCIT_num_output())
+    d_width += (SCIT->SCIT_get_num_instr() + SCIT->SCIT_num_output());
    }
    if(REN->stall_dispatch(d_width)) return;
 
@@ -156,7 +156,7 @@ void pipeline_t::dispatch() {
       if(PAY.buf[index].skipped_type == 0) //Regular instruction
       {
         PAY.buf[index].AL_index = REN->dispatch_inst(destValid, destLogReg, destPhysReg, load_flag, store_flag, branch_flag, amo_flag, csr_flag, pc);
-        if(PAY.buf[index].pc == SCIT->PC)
+        if(PAY.buf[index].pc == SCIT->SCIT_get_PC())
         {
             uint64_t s_head, s_tail;
             REN->AL_padding(SCIT->SCIT_get_num_instr(), s_head, s_tail);

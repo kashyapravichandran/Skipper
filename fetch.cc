@@ -235,7 +235,7 @@ void pipeline_t::fetch() {
 
 
       //check to see if skipped block has been completely fetched
-      if(skipper_in_progress && next_pc==SCIT->RPC && !pmoves_in_progres)
+      if(skipper_in_progress && next_pc==SCIT->SCIT_rpc && !pmoves_in_progress)
       {
         	skipper_in_progress = false;
 			pmoves_in_progress = true;

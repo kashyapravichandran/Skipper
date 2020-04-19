@@ -180,6 +180,7 @@ private:
 		uint64_t inputreg, outputreg;
 		uint64_t *inputreg_array, *outputreg_array;
 		uint64_t num_instruction, actual_num_instruction;
+		uint64_t payload_buff_head;
 	}*SIST;
 	
 	/////////////////////////////////////////////////////////////////////

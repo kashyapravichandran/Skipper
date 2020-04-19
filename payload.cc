@@ -6,6 +6,11 @@ payload::payload() {
 	clear();
 }
 
+unsigned int payload::fake_push(unsigned int a)
+{
+	return MOD((a + 2), PAYLOAD_BUFFER_SIZE);  	
+}
+
 unsigned int payload::push() {
 	unsigned int index;
 

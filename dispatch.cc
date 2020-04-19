@@ -159,7 +159,7 @@ void pipeline_t::dispatch() {
         if(PAY.buf[index].pc == SCIT->SCIT_get_PC())
         {
             uint64_t s_head, s_tail;
-            REN->AL_padding(SCIT->SCIT_get_num_instr(), s_head, s_tail);
+            REN->AL_padding((SCIT->SCIT_get_num_instr()+SCIT->SCIT_num_output()), s_head, s_tail);
             //insert s_head, s_tail into SIST
             REN->SIST_AL_info(s_head, s_tail);
                                     	

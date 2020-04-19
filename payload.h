@@ -231,6 +231,7 @@ public:
 
 	payload();		// constructor
 	unsigned int push();
+	unsigned int fake_push(unsigned int a);
 	void pop();
 	void clear();
 	void split(unsigned int index);

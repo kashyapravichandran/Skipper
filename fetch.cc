@@ -13,6 +13,7 @@ void pipeline_t::fetch() {
    cycle_t resolve_cycle2;
 	static bool pmoves_in_progress = false; 
 	static unsigned int num_pmoves = 0;
+	static unsigned int payload_buf_head;
    // Variables influencing when to terminate fetch bundle.
    unsigned int i;	// iterate up to fetch width
    bool stop;		// branch, icache block boundary, etc.
@@ -130,7 +131,14 @@ void pipeline_t::fetch() {
          set_fetch_csr();
 		
       // Put the instruction's information into PAY.
-      index = PAY.push();
+      if(skipper_in_progress||pmoves_in_progress)
+      	{
+		  index = payload_buf_head;
+		  	payload_buf_head = PAY.fake_push(payload_buf_head);
+		}
+	  else 	
+	  	index = PAY.push();
+	  	
       PAY.buf[index].inst = insn;
       
       if(!pmoves_in_progress)
@@ -199,7 +207,15 @@ void pipeline_t::fetch() {
 	            if(pc == SCIT->SCIT_get_PC())//pc is present in SCIT
 	            {
 	                next_pc = SCIT->SCIT_rpc(); //assuming 1 SCIT index for now.
-	                //skipper_in_progress = true;
+	            
+					//skipper_in_progress = true;
+					for(int j=0;j<SCIT->SCIT_num_instr()+SCIT->SCIT_num_outputreg();j++)
+					{
+						if(j==0)
+							payload_buf_head=PAY.push();
+						else 
+							PAY.push();
+					}
 	            }
 	            else
 	            {

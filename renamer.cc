@@ -566,7 +566,7 @@ uint64_t renamer::skipper_rename_dst(uint64_t log_reg)
 
 bool renamer::skipper_AL_resolve()
 {
-	if(SIST->actual_num_instruction>SIST->num_instruction)
+	if(SIST->actual_num_instruction>(SIST->num_instruction+SIST->outputreg))
 	{
 		// 1. Change the AL List 
 		// Check the Renamping map table 

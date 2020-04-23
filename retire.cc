@@ -57,7 +57,14 @@ void pipeline_t::retire(size_t& instret) {
 
    if (head_valid && completed) {    // AL head exists and completed
 		
-	
+      //map_to_actual
+	  PAY.map_to_actual(this, index, Tid);
+      if (PAY.buf[index].good_instruction)
+         actual = pipe->peek(PAY.buf[index].db_index);
+      else
+         actual = (db_t *) NULL;
+
+
       // Sanity checks of the 'amo' and 'csr' flags.
       assert(!amo || IS_AMO(PAY.buf[PAY.head].flags));
       assert(!csr || IS_CSR(PAY.buf[PAY.head].flags));

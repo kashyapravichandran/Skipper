@@ -111,49 +111,54 @@ void pipeline_t::writeback(unsigned int lane_number) {
             // Clear the fetch unit's exception, amo, and csr flags.  The fetch unit stalls on these conditions.
             // Therefore, we can infer that the mispredicted branch is logically before any offending instruction,
             // and the condition should be cleared.
-            clear_fetch_exception();
-            clear_fetch_amo();
-            clear_fetch_csr();
-
-            // FIX_ME #15c
-            // The simulator is running in real branch prediction mode, and the branch was mispredicted.
-            // Recall the two high-level steps that are necessary in this case:
-            // * Recover key units: the Fetch Unit, the renamer module (RMT, FL, AL), and the LSU.
-            //   The Fetch Unit is recovered in the statements immediately preceding this comment (please study them for knowledge).
-            //   The LSU is recovered in the statements immediately following this comment (please study them for knowledge).
-            //   Your job for #15c will be to recover the renamer module, in between.
-            // * Squash instructions in the pipeline that are logically after the branch. You will do this too, in #15d below.
-            //
-            // Restore the RMT, FL, and AL.
-            //
-            // Tips:
-            // 1. See #15a, item 1.
-            // 2. See #15a, item 2 -- EXCEPT in this case the branch was mispredicted, so specify not-correct instead of correct.
-            //    This will restore the RMT, FL, and AL, and also free this and future checkpoints... etc.
-            REN->resolve(PAY.buf[index].AL_index, PAY.buf[index].branch_ID, false);
 
 
+            if(PAY.buf[index].pc != SCIT->SCIT_get_PC())
+            {            
+                clear_fetch_exception();
+                clear_fetch_amo();
+                clear_fetch_csr();
 
-            // Restore the LQ/SQ.
-            LSU.restore(PAY.buf[index].LQ_index, PAY.buf[index].LQ_phase, PAY.buf[index].SQ_index, PAY.buf[index].SQ_phase);
-
-            // FIX_ME #15d
-            // Squash instructions after the branch in program order, in all pipeline registers and the IQ.
-            //
-            // Tips:
-            // 1. At this point of the code, 'index' is the instruction's index into PAY.buf[] (payload).
-            // 2. Squash instructions after the branch in program order.
-            //    To do this, call the resolve() function with the appropriate arguments. This function does the work for you.
-            //    * resolve() is a private function of the pipeline_t class, therefore, just call it literally as 'resolve'.
-            //    * resolve() takes two arguments. The first argument is the branch's ID. The second argument is a flag that
-            //      indicates whether or not the branch was predicted correctly: in this case it is not-correct.
-            //    * See pipeline.h for details about the two arguments of resolve().
-            resolve(PAY.buf[index].branch_ID, false);
+                // FIX_ME #15c
+                // The simulator is running in real branch prediction mode, and the branch was mispredicted.
+                // Recall the two high-level steps that are necessary in this case:
+                // * Recover key units: the Fetch Unit, the renamer module (RMT, FL, AL), and the LSU.
+                //   The Fetch Unit is recovered in the statements immediately preceding this comment (please study them for knowledge).
+                //   The LSU is recovered in the statements immediately following this comment (please study them for knowledge).
+                //   Your job for #15c will be to recover the renamer module, in between.
+                // * Squash instructions in the pipeline that are logically after the branch. You will do this too, in #15d below.
+                //
+                // Restore the RMT, FL, and AL.
+                //
+                // Tips:
+                // 1. See #15a, item 1.
+                // 2. See #15a, item 2 -- EXCEPT in this case the branch was mispredicted, so specify not-correct instead of correct.
+                //    This will restore the RMT, FL, and AL, and also free this and future checkpoints... etc.
+                REN->resolve(PAY.buf[index].AL_index, PAY.buf[index].branch_ID, false);
 
 
 
-            // Rollback PAY to the point of the branch.
-            PAY.rollback(index);
+                // Restore the LQ/SQ.
+                LSU.restore(PAY.buf[index].LQ_index, PAY.buf[index].LQ_phase, PAY.buf[index].SQ_index, PAY.buf[index].SQ_phase);
+
+                // FIX_ME #15d
+                // Squash instructions after the branch in program order, in all pipeline registers and the IQ.
+                //
+                // Tips:
+                // 1. At this point of the code, 'index' is the instruction's index into PAY.buf[] (payload).
+                // 2. Squash instructions after the branch in program order.
+                //    To do this, call the resolve() function with the appropriate arguments. This function does the work for you.
+                //    * resolve() is a private function of the pipeline_t class, therefore, just call it literally as 'resolve'.
+                //    * resolve() takes two arguments. The first argument is the branch's ID. The second argument is a flag that
+                //      indicates whether or not the branch was predicted correctly: in this case it is not-correct.
+                //    * See pipeline.h for details about the two arguments of resolve().
+                resolve(PAY.buf[index].branch_ID, false);
+
+
+
+                // Rollback PAY to the point of the branch.
+                PAY.rollback(index);
+            }
          }
       }
 

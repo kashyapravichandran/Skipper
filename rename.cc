@@ -80,8 +80,8 @@ void pipeline_t::rename2() {
       // 3. The instruction's payload has all the information you need to count resource needs.
       //    There is a flag in the instruction's payload that *directly* tells you if this instruction needs a checkpoint.
       //    Another field indicates whether or not the instruction has a destination register.
-      if(PAY.buf[index].checkpoint) num_chkpts++;
-      if(PAY.buf[index].C_valid&&PAY.buf[index].skipped_type!=2) num_dest_regs++; 
+      if(PAY.buf[index].checkpoint && PAY.buf[index].pc!=SCIT->SCIT_get_PC()) num_chkpts++;
+      if(PAY.buf[index].C_valid && PAY.buf[index].skipped_type!=2) num_dest_regs++; 
    }
 
    // FIX_ME #2
@@ -105,11 +105,11 @@ void pipeline_t::rename2() {
    for(i=0;i<dispatch_width;i++)
    {
 		index = RENAME2[i].index;
-		if(PAY.buf[index].pc==SCIT->SCIT_get_PC())
+		if(PAY.buf[index].pc == SCIT->SCIT_get_PC())
 		{
    			if(REN->stall_skipper())
 				return;
-			if(REN->stall_reg(SCIT->SCIT_num_output()+num_dest_regs))
+			if(REN->stall_reg(SCIT->SCIT_num_output() + num_dest_regs))
 				return;
 		}
 	}
@@ -136,7 +136,8 @@ void pipeline_t::rename2() {
       //    * whether or not the instruction has a destination register, and its logical register number
       // 3. When you rename a logical register to a physical register, remember to *update* the instruction's payload with the physical register specifier,
       //    so that the physical register specifier can be used in subsequent pipeline stages.
-      if(!PAY.buf[index].skipped_type)
+
+      if(PAY.buf[index].skipped_type == 0) //normal instruction
 	  {
 		if(PAY.buf[index].A_valid) PAY.buf[index].A_phys_reg = REN->rename_rsrc(PAY.buf[index].A_log_reg);
       	if(PAY.buf[index].B_valid) PAY.buf[index].B_phys_reg = REN->rename_rsrc(PAY.buf[index].B_log_reg);
@@ -181,6 +182,7 @@ void pipeline_t::rename2() {
       // 2. There is a flag in the instruction's payload that *directly* tells you if this instruction needs a checkpoint.
       // 3. If you create a checkpoint, remember to *update* the instruction's payload with its branch ID
       //    so that the branch ID can be used in subsequent pipeline stages.
+
       if(PAY.buf[index].checkpoint && PAY.buf[index].pc!=SCIT->SCIT_get_PC()) PAY.buf[index].branch_ID = REN->checkpoint(); // PC check 
       //TODO: Maybe need to use another variable to keep track of whether a checkpoint has been skipped. After that dont skip any more checkpoint creations
 	  

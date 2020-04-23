@@ -50,7 +50,7 @@ void pipeline_t::dispatch() {
 
    if(difficult_branch ==  true)
    {
-    d_width += (SCIT->SCIT_get_num_instr() + SCIT->SCIT_num_output());
+      d_width += (SCIT->SCIT_get_num_instr() + SCIT->SCIT_num_output());
    }
    if(REN->stall_dispatch(d_width)) return;
 
@@ -167,12 +167,11 @@ void pipeline_t::dispatch() {
         
         
         // Resolving AL Problems.
-        
-        if(finished_skipping)
-        {
-        	REN->skipper_AL_resolve();
-        	finished_skipping = false;
-		}
+        //if(finished_skipping)
+        //{
+        //	REN->skipper_AL_resolve();
+        //	finished_skipping = false;
+		//}
 		
       }
       else //Skipped block instruction/ pmove

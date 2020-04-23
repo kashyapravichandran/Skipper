@@ -261,18 +261,18 @@ void renamer::resolve(uint64_t AL_index, uint64_t branch_ID, bool correct)
 		
 		// Have two condition -- Stuff added for skipper
 		
-		if(active_head>active_tail)
-			for(int i=active_tail+1;i<active_head;i++)
-				active_list[i].valid=false;
-		else 
-		{
-			for(int i=active_tail+1;i<size_list;i++)
-				active_list[i].valid=false;
-			if(active_head!=0)
-				for(int i=0;i<active_head;i++)
-				active_list[i].valid=false;	
-		
-		}
+		//if(active_head>active_tail)
+		//	for(int i=active_tail+1;i<active_head;i++)
+		//		active_list[i].valid=false;
+		//else 
+		//{
+		//	for(int i=active_tail+1;i<size_list;i++)
+		//		active_list[i].valid=false;
+		//	if(active_head!=0)
+		//		for(int i=0;i<active_head;i++)
+		//		active_list[i].valid=false;	
+		//
+		//}
 
 		// Stuff added for skipper
 
@@ -396,11 +396,10 @@ void renamer::squash()
 	
 	
 	// Stuff added for skipper 
-	
-	for(int i=0;i<size_list;i++)
-	{
-		active_list[i].valid=false;
-	}
+	//for(int i=0;i<size_list;i++)
+	//{
+	//	active_list[i].valid=false;
+	//}
 	
 	
 	// Stuff added for skipper
@@ -491,7 +490,9 @@ void renamer::create_SIST( uint64_t diff, uint64_t reconv,  uint64_t input, uint
 	
 	// Rename (assign and Store it here ) Think about stalling here if needed. - Stalling taken care of in the rename stage! 
 	for(int i=0;i<SIST->outputreg;i++)
-		renamer::rename_rdst(SIST->outputreg_array[i]);
+    {
+		clear_ready(rename_rdst(SIST->outputreg_array[i]));
+    }
 	
 	copy_state(SIST->Preassign_table,RMT);
 		
@@ -499,8 +500,8 @@ void renamer::create_SIST( uint64_t diff, uint64_t reconv,  uint64_t input, uint
 
 void renamer::SIST_AL_info(uint64_t head, uint64_t tail)
 {
-	SIST->head_of_skipper=head;
-	SIST->tail_of_skipper=tail;
+	SIST->head_of_skipper = head;
+	SIST->tail_of_skipper = tail;
 
 }
 
@@ -559,7 +560,7 @@ uint64_t renamer::skipper_rename_dst(uint64_t log_reg)
 			free.head++;
 	}
 	
-	SIST->backup_table[log_reg]=free.list[pos];
+	SIST->backup_table[log_reg] = free.list[pos];
 	//cout<<"Renamed Register : "<<free.list[pos];
 	return free.list[pos];
 }

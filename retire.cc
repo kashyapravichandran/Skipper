@@ -47,10 +47,18 @@ void pipeline_t::retire(size_t& instret) {
    //    * Alternatively, if the completed head instruction is an exception, the trap is taken and the pipeline
    //      is squashed including the offending instruction.
 	head_valid=REN->precommit(completed, exception, load_viol, br_misp, val_misp, load, store, branch,amo, csr, offending_PC);
-	if(head_valid&&!REN->AL_entry_valid())
+	if(head_valid)
 	{
-		REN->fake_retire();	
-		head_valid=REN->precommit(completed, exception, load_viol, br_misp, val_misp, load, store, branch,amo, csr, offending_PC);
+		//REN->fake_retire();	
+		//head_valid=REN->precommit(completed, exception, load_viol, br_misp, val_misp, load, store, branch,amo, csr, offending_PC);
+		while(!REN->AL_entry_valid)
+		{
+			REN->fake_retire();
+			if (!PAY.buf[PAY.head].split) PAY.pop();
+	    	PAY.pop();
+         }
+			
+	
 	}
 	
 
@@ -58,12 +66,15 @@ void pipeline_t::retire(size_t& instret) {
    if (head_valid && completed) {    // AL head exists and completed
 		
       //map_to_actual
-	  PAY.map_to_actual(this, index, Tid);
-      if (PAY.buf[index].good_instruction)
-         actual = pipe->peek(PAY.buf[index].db_index);
-      else
-         actual = (db_t *) NULL;
-
+      // check for Pmoves
+      if (PAY.buf[PAY.head].skipped_type!=2)
+	  {
+	  	PAY.map_to_actual(this, index, Tid);
+      	if (PAY.buf[index].good_instruction)
+      	   actual = pipe->peek(PAY.buf[index].db_index);
+      	else
+        	 actual = (db_t *) NULL;
+		}
 
       // Sanity checks of the 'amo' and 'csr' flags.
       assert(!amo || IS_AMO(PAY.buf[PAY.head].flags));
@@ -115,6 +126,7 @@ void pipeline_t::retire(size_t& instret) {
          }
 
 	 // Check results.
+	  if(PAY.buf[PAY.head].skipped_type!=2)
 	 checker();
 
 	 // Keep track of the number of retired instructions.
@@ -199,7 +211,8 @@ void pipeline_t::retire(size_t& instret) {
          inc_counter(exception_count);
 
          // Compare pipeline simulator against functional simulator.
-         checker();
+         if(PAY.buf[PAY.head].skipped_type!=2)
+			 checker();
 
          // Squash the pipeline.
          squash_complete(jump_PC);

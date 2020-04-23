@@ -363,15 +363,12 @@ bool renamer::AL_entry_valid()
 
 void renamer::fake_retire()
 {
-	while(active_list[active_head].valid==false)
-	{
-		if(active_head==active_tail)
-			active_head=active_tail=-1;
-		else if(active_head==size_list-1)
-			active_head=0;
-		else 
-			active_head++;
-	}
+	if(active_head==active_tail)
+		active_head=active_tail=-1;
+	else if(active_head==size_list-1)
+		active_head=0;
+	else 
+		active_head++;
 }
 // -------------------------------
 

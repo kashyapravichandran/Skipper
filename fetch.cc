@@ -117,12 +117,18 @@ void pipeline_t::fetch() {
          	uint64_t *array = SCIT->SCIT_outputreg();
          	insn = (0<<19) | (array[num_pmoves]<<14) | (0 << 11) | (array[num_pmoves] << 6) | (19) ; // Immediate | Source Register | Function 3 | Destination Register | Opcode
          	num_pmoves++;
-         	if(num_pmoves==SCIT->SCIT_num_output()) //done injecting pmoves
-         	{
-                num_pmoves = 0;
-			 	next_pc = future_pc;
-			 	pmoves_in_progress = false;
-			}
+         	
+         	//maybe 
+         	
+         	//clear_fetch_exception();
+         	//
+         	
+         	//if(num_pmoves==SCIT->SCIT_num_output()) //done injecting pmoves
+         	//{
+            //    num_pmoves = 0;
+			// 	next_pc = future_pc;
+			// 	pmoves_in_progress = false;
+			//}
 		 }
       }
 
@@ -208,14 +214,15 @@ void pipeline_t::fetch() {
 	        if(pc == SCIT->SCIT_get_PC())//pc is present in SCIT
 	        {
 	            next_pc = SCIT->SCIT_rpc(); //assuming 1 SCIT index for now.
-	        
+	        	unsigned int temp_index;
 	    		//skipper_in_progress = true;
 	    		for(int j=0; j<SCIT->SCIT_num_instr()+SCIT->SCIT_num_outputreg(); j++)
 	    		{
-	    			if(j==0)
-	    				payload_buf_head = PAY.push();
-	    			else 
-	    				PAY.push();
+	    			temp_index=PAY.push();
+					if(j==0)
+	    				payload_buf_head = temp_index;
+	    			PAY.buf[temp_index].inst=insn_t(INSN_NOP);
+	    				
 	    		}
 	        }
 	        else

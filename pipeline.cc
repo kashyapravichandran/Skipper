@@ -182,13 +182,13 @@ pipeline_t::pipeline_t(
   LSU.set_l2_cache(L2C);
 	
  //Init SCIT here
- uint64_t ipnum = 1, opnum = 1 ;
+ uint64_t ipnum = 2, opnum = 2;
  uint64_t* ip = new uint64_t [ipnum];
  uint64_t* op = new uint64_t [opnum];
- ip[0]=1;
- op[0]=1; 
+ ip[0]=1; ip[1] = 9;
+ op[0]=1; op[1] = 9;
   
-  SCIT = new SCIT_table(0x10454,0x10164,1,ip,op,opnum,ipnum);     /*uint64_t pc, uint64_t rpc, uint64_t insn, uint64_t* ipregs, uint64_t* opregs*/
+  SCIT = new SCIT_table(0x1015c,0x1016c,2,ip,op,opnum,ipnum);     /*uint64_t pc, uint64_t rpc, uint64_t insn, uint64_t* ipregs, uint64_t* opregs*/
 
   /////////////////////////////////////////////////////////////
   // Pipeline register between the Fetch and Decode Stages.

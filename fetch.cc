@@ -115,7 +115,7 @@ void pipeline_t::fetch() {
          {
          	// if over here! 
          	uint64_t *array = SCIT->SCIT_outputreg();
-         	insn = (0<<19) | (array[num_pmoves]<<14) | (0 << 11) | (array[num_pmoves] << 6) | (19) ; // Immediate | Source Register | Function 3 | Destination Register | Opcode
+         	insn = (0<<20) | (array[num_pmoves]<<15) | (0 << 12) | (array[num_pmoves] << 7) | (19) ; // Immediate | Source Register | Function 3 | Destination Register | Opcode
          	num_pmoves++;
          	
          	//maybe 
@@ -216,7 +216,7 @@ void pipeline_t::fetch() {
 	            next_pc = SCIT->SCIT_rpc(); //assuming 1 SCIT index for now.
 	        	unsigned int temp_index;
 	    		//skipper_in_progress = true;
-	    		for(int j=0; j<SCIT->SCIT_num_instr()+SCIT->SCIT_num_outputreg(); j++)
+	    		for(int j=0; j<SCIT->SCIT_get_num_instr()+SCIT->SCIT_num_output(); j++)
 	    		{
 	    			temp_index=PAY.push();
 					if(j==0)

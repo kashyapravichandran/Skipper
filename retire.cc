@@ -51,30 +51,30 @@ void pipeline_t::retire(size_t& instret) {
 	{
 		//REN->fake_retire();	
 		//head_valid=REN->precommit(completed, exception, load_viol, br_misp, val_misp, load, store, branch,amo, csr, offending_PC);
-		while(!REN->AL_entry_valid)
+		while(!REN->AL_entry_valid())
 		{
 			REN->fake_retire();
 			if (!PAY.buf[PAY.head].split) PAY.pop();
 	    	PAY.pop();
-         }
-			
+        }
 	
+         head_valid=REN->precommit(completed, exception, load_viol, br_misp, val_misp, load, store, branch,amo, csr, offending_PC);
 	}
 	
-
 
    if (head_valid && completed) {    // AL head exists and completed
 		
       //map_to_actual
+      db_t *actual;
       // check for Pmoves
-      if (PAY.buf[PAY.head].skipped_type!=2)
+      if(PAY.buf[PAY.head].skipped_type!=2)
 	  {
-	  	PAY.map_to_actual(this, index, Tid);
-      	if (PAY.buf[index].good_instruction)
-      	   actual = pipe->peek(PAY.buf[index].db_index);
+	  	PAY.map_to_actual(this, PAY.head, Tid);
+      	if (PAY.buf[PAY.head].good_instruction)
+      	   actual = pipe->peek(PAY.buf[PAY.head].db_index);
       	else
-        	 actual = (db_t *) NULL;
-		}
+           actual = (db_t *) NULL;
+	  }
 
       // Sanity checks of the 'amo' and 'csr' flags.
       assert(!amo || IS_AMO(PAY.buf[PAY.head].flags));
@@ -113,7 +113,7 @@ void pipeline_t::retire(size_t& instret) {
 		REN->commit();
 
          // If the committed instruction is a branch, signal the branch predictor to commit its oldest branch.
-         if (branch && !PERFECT_BRANCH_PRED) {
+         if (branch && !PERFECT_BRANCH_PRED && PAY.buf[PAY.head].pc != SCIT->SCIT_get_PC()) {
 	    // TODO (ER): Change the branch predictor interface as follows: BP.commit().
             BP.verify_pred(PAY.buf[PAY.head].pred_tag, PAY.buf[PAY.head].c_next_pc, false);
          }

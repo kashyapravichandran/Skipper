@@ -476,6 +476,12 @@ void renamer::create_SIST( uint64_t diff, uint64_t reconv,  uint64_t input, uint
 	SIST->reconvergence_pc=reconv;
 	SIST->inputreg=input;
 	SIST->outputreg=output;
+
+    SIST->inputreg_array = new uint64_t[input];
+    SIST->outputreg_array = new uint64_t[output];
+
+    SIST->backup_table = new uint64_t[logical_size];
+    SIST->Preassign_table = new uint64_t[logical_size];
 	
 	for(int i=0;i<SIST->inputreg;i++)
 		SIST->inputreg_array[i]=inputreg_array[i];

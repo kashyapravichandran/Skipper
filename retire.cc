@@ -7,7 +7,7 @@ void pipeline_t::retire(size_t& instret) {
    bool head_valid;
    bool completed, exception, load_viol, br_misp, val_misp, load, store, branch, amo, csr;
    reg_t offending_PC;
-
+   static int num_pmoves = 0;
    bool amo_success;
    trap_t *trap = NULL; // Supress uninitialized warning.
 
@@ -47,18 +47,17 @@ void pipeline_t::retire(size_t& instret) {
    //    * Alternatively, if the completed head instruction is an exception, the trap is taken and the pipeline
    //      is squashed including the offending instruction.
 	head_valid=REN->precommit(completed, exception, load_viol, br_misp, val_misp, load, store, branch,amo, csr, offending_PC);
-	if(head_valid)
+	if(head_valid && num_pmoves == SCIT->SCIT_get_num_output())
 	{
-		//REN->fake_retire();	
-		//head_valid=REN->precommit(completed, exception, load_viol, br_misp, val_misp, load, store, branch,amo, csr, offending_PC);
 		while(!REN->AL_entry_valid())
 		{
 			REN->fake_retire();
 			if (!PAY.buf[PAY.head].split) PAY.pop();
-	    	PAY.pop();
-        }
+    		PAY.pop();
+       	}
+		num_pmoves=0;
+    	 head_valid=REN->precommit(completed, exception, load_viol, br_misp, val_misp, load, store, branch,amo, csr, offending_PC);
 	
-         head_valid=REN->precommit(completed, exception, load_viol, br_misp, val_misp, load, store, branch,amo, csr, offending_PC);
 	}
 	
 
@@ -75,7 +74,10 @@ void pipeline_t::retire(size_t& instret) {
       	else
            actual = (db_t *) NULL;
 	  }
-
+	  else
+	  {
+	  	num_pmoves++;
+	  }
       // Sanity checks of the 'amo' and 'csr' flags.
       assert(!amo || IS_AMO(PAY.buf[PAY.head].flags));
       assert(!csr || IS_CSR(PAY.buf[PAY.head].flags));

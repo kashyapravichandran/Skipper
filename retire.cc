@@ -47,7 +47,7 @@ void pipeline_t::retire(size_t& instret) {
    //    * Alternatively, if the completed head instruction is an exception, the trap is taken and the pipeline
    //      is squashed including the offending instruction.
 	head_valid=REN->precommit(completed, exception, load_viol, br_misp, val_misp, load, store, branch,amo, csr, offending_PC);
-	if(head_valid && num_pmoves == SCIT->SCIT_get_num_output())
+	if(head_valid && num_pmoves == SCIT->SCIT_num_output())
 	{
 		while(!REN->AL_entry_valid())
 		{

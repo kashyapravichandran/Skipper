@@ -461,6 +461,11 @@ void renamer::AL_padding(uint64_t no_instruction, uint64_t &head_skipper, uint64
 			head_skipper=active_tail;
 		}
 		flag=1;
+		active_list[active_tail].branch_misprediction=false;
+		active_list[active_tail].load_violation=false;
+		active_list[active_tail].exception=false;
+		active_list[active_tail].completed=false;
+		active_list[active_tail].value_misprediction=false;
 		active_list[active_tail].valid=false;
 	}
 	tail_skipper=active_tail;

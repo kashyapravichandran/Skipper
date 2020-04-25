@@ -56,28 +56,22 @@ void pipeline_t::retire(size_t& instret) {
     		PAY.pop();
        	}
 		num_pmoves=0;
-    	 head_valid=REN->precommit(completed, exception, load_viol, br_misp, val_misp, load, store, branch,amo, csr, offending_PC);
+    	head_valid=REN->precommit(completed, exception, load_viol, br_misp, val_misp, load, store, branch,amo, csr, offending_PC);
 	
 	}
 	
 
-   if (head_valid && completed) {    // AL head exists and completed
+   if (head_valid && completed && PAY.buf[PAY.head].skipped_type!=2) {    // AL head exists and completed
 		
       //map_to_actual
       db_t *actual;
       // check for Pmoves
-      if(PAY.buf[PAY.head].skipped_type!=2)
-	  {
-	  	PAY.map_to_actual(this, PAY.head, Tid);
-      	if (PAY.buf[PAY.head].good_instruction)
-      	   actual = pipe->peek(PAY.buf[PAY.head].db_index);
-      	else
-           actual = (db_t *) NULL;
-	  }
-	  else
-	  {
-	  	num_pmoves++;
-	  }
+	  PAY.map_to_actual(this, PAY.head, Tid);
+      if (PAY.buf[PAY.head].good_instruction)
+         actual = pipe->peek(PAY.buf[PAY.head].db_index);
+      else
+         actual = (db_t *) NULL;
+      
       // Sanity checks of the 'amo' and 'csr' flags.
       assert(!amo || IS_AMO(PAY.buf[PAY.head].flags));
       assert(!csr || IS_CSR(PAY.buf[PAY.head].flags));
@@ -128,12 +122,11 @@ void pipeline_t::retire(size_t& instret) {
          }
 
 	 // Check results.
-	  if(PAY.buf[PAY.head].skipped_type!=2)
 	 checker();
 
 	 // Keep track of the number of retired instructions.
 	 num_insn++;
-         instret++;
+     instret++;
 	 inc_counter(commit_count);
 	 if (PAY.buf[PAY.head].split && PAY.buf[PAY.head].upper)
             num_insn_split++;
@@ -207,14 +200,13 @@ void pipeline_t::retire(size_t& instret) {
          }
 
          // Keep track of the number of retired instructions.
-	 instret++;
-	 num_insn++;	
+	     instret++;
+	     num_insn++;	
          inc_counter(commit_count);
          inc_counter(exception_count);
 
          // Compare pipeline simulator against functional simulator.
-         if(PAY.buf[PAY.head].skipped_type!=2)
-			 checker();
+		 checker();
 
          // Squash the pipeline.
          squash_complete(jump_PC);
@@ -223,6 +215,14 @@ void pipeline_t::retire(size_t& instret) {
          // Flush PAY.
          PAY.clear();
       }
+   }
+   else if(head_valid && completed && PAY.buf[PAY.head].skipped_type==2)
+   {
+		REN->commit();
+	  	num_pmoves++;
+	    
+        if (!PAY.buf[PAY.head].split) PAY.pop();
+	    PAY.pop();
    }
 }
 

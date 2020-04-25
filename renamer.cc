@@ -439,11 +439,15 @@ bool renamer::stall_skipper()
 
 void renamer::AL_padding(uint64_t no_instruction, uint64_t &head_skipper, uint64_t &tail_skipper)
 {
-	int flag=0;
+
 			
 	for(int i=0;i<no_instruction;i++)
 	{
 		assert(!(active_head==0&&active_tail==size_list-1)||(active_head==active_tail+1));
+		if(i==0)
+		{
+			head_skipper=active_tail;
+		}
 		if(active_tail==-1)
 		{
 			active_head=0;
@@ -456,11 +460,8 @@ void renamer::AL_padding(uint64_t no_instruction, uint64_t &head_skipper, uint64
 			else 
 				active_tail++;
 		}
-		if(!flag)
-		{
-			head_skipper=active_tail;
-		}
-		flag=1;
+		
+
 		active_list[active_tail].branch_misprediction=false;
 		active_list[active_tail].load_violation=false;
 		active_list[active_tail].exception=false;

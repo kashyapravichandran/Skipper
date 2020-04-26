@@ -162,6 +162,8 @@ bool lsu::stall(unsigned int bundle_load, unsigned int bundle_store) {
 	return( load_stall || store_stall );
 }
 
+// Fake dispatch stuff 
+// LSU 
 
 void lsu::dispatch(bool load,
                    unsigned int size,
@@ -611,7 +613,10 @@ bool lsu::commit(bool load, bool atomic_op, bool& atomic_success) {
    if (load) {
       // LQ should not be empty.
       assert(lq_length > 0);
-
+		
+	  // Maybe Fake commit
+	  
+	  	
       // STATS
       n_load++;
       if (LQ[lq_head].stat_load_stall_disambig) {
@@ -646,6 +651,10 @@ bool lsu::commit(bool load, bool atomic_op, bool& atomic_success) {
       // SQ should not be empty.
       assert(sq_length > 0);
     
+    
+      // Maybe commit store here! 
+	  
+	  	
       // If this is a store-conditional instruction and its load reservation has been lost, don't send the store to memory.
       if (atomic_op && (proc->get_state()->load_reservation != SQ[sq_head].addr)) {
          atomic_success = false;

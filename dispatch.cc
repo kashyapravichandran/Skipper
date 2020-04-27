@@ -85,10 +85,10 @@ void pipeline_t::dispatch() {
       }
 
       // Check LQ/SQ requirement.
-      if (IS_LOAD(PAY.buf[index].flags)) {
+      if (IS_LOAD(PAY.buf[index].flags)&&PAY.buf[index].skipped_type==0) {
          bundle_load++;
       }
-      else if (IS_STORE(PAY.buf[index].flags)) {
+      else if (IS_STORE(PAY.buf[index].flags)&&PAY.buf[index].skipped_type==0) {
          // Special cases:
          // S_S and S_D are split-stores, i.e., they are split into an addr-op and a value-op.
          // The two ops share a SQ entry to "rejoin". Therefore, only the first op should check
@@ -97,9 +97,18 @@ void pipeline_t::dispatch() {
             bundle_store++;
          }
       }
+      if(PAY.buf[index]==SCIT->SCIT_get_PC())
+      {
+      	bundle_load = bundle_load+SCIT->SCIT_num_load();
+      	bundle_store = bundle_store + SCIT->SCIT_num_stores();
+	  }
+      
    }
-
+    
+    // Need to add the value to bundle_load and bundle_store
    // Now, check for available entries in the unified IQ and the LQ/SQ.
+   
+   
    if (IQ.stall(bundle_inst) || LSU.stall(bundle_load, bundle_store)) {
       return;
    }
@@ -343,6 +352,9 @@ void pipeline_t::dispatch() {
 		// place things here 
 
       // Dispatch loads and stores into the LQ/SQ and record their LQ/SQ indices.
+      // For skipper use stuff before you dispatch. The index get changed in the skipped_dispatch function 
+      
+      
       if (IS_MEM_OP(PAY.buf[index].flags)) {
          if (!PAY.buf[index].split_store || PAY.buf[index].upper) {
             LSU.dispatch(IS_LOAD(PAY.buf[index].flags),

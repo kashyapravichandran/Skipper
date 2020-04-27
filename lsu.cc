@@ -165,6 +165,135 @@ bool lsu::stall(unsigned int bundle_load, unsigned int bundle_store) {
 // Fake dispatch stuff 
 // LSU 
 
+//stuff added for skipper  -- Dispatch 
+
+void lsu::queue_pad(unsigned int num_loads, unsigned int num_stores, unsigned int& lq_index, bool& lq_index_phase,unsigned int& sq_index, bool& sq_index_phase)
+{
+	
+	lq_index = lq_tail;
+	sq_index=sq_tail;
+	sq_index_phase = sq_tail_phase;
+	lq_index_phase = lq_tail_phase;
+	for(int i =0;i<num_loads;i++)
+	{
+		// Advance LQ tail pointer and increment LQ length.
+		assert(lq_length < lq_size);
+		LQ[lq_tail].valid = false;
+		LQ[lq_tail].fake_retire = true;
+		lq_tail = MOD_S((lq_tail + 1), lq_size);
+		lq_length++;
+      
+		// Detect wrap-around of lq_tail and toggle its phase bit accordingly.
+		if (lq_tail == 0) {
+			lq_tail_phase = !lq_tail_phase;
+		}
+	}
+	for(int i=0;i<num_stores;i++)
+	{
+	    assert(sq_length < sq_size);
+		SQ[sq_tail].valid = false;
+	    SQ[sq_tail].fake_retire = true;
+		sq_tail = MOD_S((sq_tail + 1), sq_size);
+		sq_length++;
+
+		// Detect wrap-around of sq_tail and toggle its phase bit accordingly.
+		if (sq_tail == 0) {
+			sq_tail_phase = !sq_tail_phase;
+		}	
+		
+	}
+	
+}
+
+
+void lsu::skipped_dispatch(bool load, unsigned int size, bool left, bool right, bool is_signed, unsigned int pay_index, unsigned int& lq_index, bool& lq_index_phase, unsigned int& sq_index, bool& sq_index_phase, bool mdp_stall)
+{
+   	//lq_index = lq_tail;
+	//lq_index_phase = lq_tail_phase;
+	//sq_index = sq_tail;
+	//sq_index_phase = sq_tail_phase;
+    //These are available in SIST use it before you dispatch! 
+	 
+	if (load) {
+		// Assert that the LQ isn't full.
+		
+
+		// Allocate entry in the LQ.
+		LQ[lq_index].valid = true;
+		LQ[lq_index].is_signed = is_signed;
+		LQ[lq_index].fake_retire = true;
+		LQ[lq_index].size = size;
+		LQ[lq_index].addr_avail = false;
+		LQ[lq_index].value_avail = false;
+		LQ[lq_index].missed = false;
+		LQ[lq_index].pay_index = pay_index;
+		LQ[lq_index].sq_index = sq_index;
+		LQ[lq_index].sq_index_phase = sq_index_phase;
+        LQ[lq_index].mdp_stall = mdp_stall;
+
+		// STATS
+		LQ[lq_index].stat_load_stall_disambig = false;
+		LQ[lq_index].stat_load_stall_miss = false;
+		LQ[lq_index].stat_store_stall_miss = false;
+		LQ[lq_index].stat_forward = false;
+
+    #ifdef RISCV_MICRO_DEBUG
+      LOG(proc->lsu_log,proc->cycle,proc->PAY.buf[pay_index].sequence,proc->PAY.buf[pay_index].pc,"Dispatching load lq entry %u",lq_tail);
+      dump_lq(proc,lq_tail,proc->lsu_log);
+    #endif
+
+		// Advance LQ tail pointer and increment LQ length.
+		lq_index= MOD_S((lq_index + 1), lq_size);
+		//lq_length++;
+
+		// Detect wrap-around of lq_tail and toggle its phase bit accordingly.
+		if (lq_index == 0) {
+			lq_index_phase = !lq_index_phase;
+		}
+	}
+	else {
+		// Assert that the SQ isn't full.
+		//assert(sq_length < sq_size);
+
+		// Allocate entry in the SQ.
+		SQ[sq_index].valid = true;
+		SQ[sq_index].is_signed = is_signed;
+		SQ[sq_index].fake_retire = true;
+		SQ[sq_index].size = size;
+		SQ[sq_index].addr_avail = false;
+		SQ[sq_index].value_avail = false;
+		SQ[sq_index].missed = false;
+
+		SQ[sq_index].pay_index = pay_index;
+
+		// STATS
+		SQ[sq_index].stat_load_stall_disambig = false;
+		SQ[sq_index].stat_load_stall_miss = false;
+		SQ[sq_index].stat_store_stall_miss = false;
+		SQ[sq_index].stat_forward = false;
+
+    #ifdef RISCV_MICRO_DEBUG
+      LOG(proc->lsu_log,proc->cycle,proc->PAY.buf[pay_index].sequence,proc->PAY.buf[pay_index].pc,"Dispatching store sq entry %u",sq_tail);
+      dump_sq(proc,sq_tail,proc->lsu_log);
+    #endif
+
+
+		// Advance SQ tail pointer and increment SQ length.
+		sq_index = MOD_S((sq_index + 1), sq_size);
+		//sq_length++;
+
+		// Detect wrap-around of sq_tail and toggle its phase bit accordingly.
+		if (sq_index == 0) {
+			sq_index_phase = !sq_index_phase;
+		}
+
+	}
+   			
+}
+
+
+// stuff added for skipper
+
 void lsu::dispatch(bool load,
                    unsigned int size,
                    bool left,
@@ -187,6 +316,7 @@ void lsu::dispatch(bool load,
 		// Allocate entry in the LQ.
 		LQ[lq_tail].valid = true;
 		LQ[lq_tail].is_signed = is_signed;
+		LQ[lq_tail].fake_retire = false;  // stuff added
 		//LQ[lq_tail].left = left;
 		//LQ[lq_tail].right = right;
 		LQ[lq_tail].size = size;
@@ -227,6 +357,7 @@ void lsu::dispatch(bool load,
 		// Allocate entry in the SQ.
 		SQ[sq_tail].valid = true;
 		SQ[sq_tail].is_signed = is_signed;
+		SQ[sq_tail].fake_retire = false;    // stuff added
 		//SQ[sq_tail].left = left;
 		//SQ[sq_tail].right = right;
 		SQ[sq_tail].size = size;
@@ -605,6 +736,50 @@ void lsu::restore(unsigned int recover_lq_tail, bool recover_lq_tail_phase,
 }
 
 
+//
+
+// fake commit of store queue
+
+void lsu::fake_commit ()
+{
+	
+	while(LQ[lq_head].valid==false && LQ[lq_head].fake_retire == true )
+	{
+		assert(lq_length > 0);
+		LQ[lq_head].valid=false;
+		LQ[lq_head].fake_retire=false;
+		// INcrement your head 
+		// decrease your length
+		lq_head = MOD_S((lq_head + 1), lq_size);
+      	lq_length--;
+		
+      // Detect wrap-around of lq_head and toggle its phase bit accordingly.
+      	if (lq_head == 0) {
+         lq_head_phase = !lq_head_phase;
+      }
+	}
+	
+	while(SQ[sq_head].valid==false && SQ[sq_head].fake_retire == true )
+	{
+		assert(lq_length > 0);
+		// INcrement your head 
+		// decrease your length
+		SQ[sq_head].valid = false;
+		SQ[sq_head].fake_retire = false;
+		sq_head = MOD_S((sq_head + 1), sq_size);
+      	sq_length--;
+
+      // Detect wrap-around of lq_head and toggle its phase bit accordingly.
+      	if (sq_head == 0) {
+         sq_head_phase = !sq_head_phase;
+      }
+	}
+}
+
+
+//
+
+
 // Stores are written out to the cache/memory system at the time of commit
 bool lsu::commit(bool load, bool atomic_op, bool& atomic_success) {
    bool exception = false;
@@ -637,7 +812,8 @@ bool lsu::commit(bool load, bool atomic_op, bool& atomic_success) {
 
       // Invalidate the entry.
       LQ[lq_head].valid = false;
-
+	  LQ[lq_head].fake_retire = false;
+	  
       // Advance the head pointer and decrement the queue length.
       lq_head = MOD_S((lq_head + 1), lq_size);
       lq_length--;
@@ -705,7 +881,8 @@ bool lsu::commit(bool load, bool atomic_op, bool& atomic_success) {
 
       // Invalidate the entry.
       SQ[sq_head].valid = false;
-  
+  	  SQ[sq_head].fake_retire = false;	
+  	  
       // Advance the head pointer and decrement the queue length.
       sq_head = MOD_S((sq_head + 1), sq_size);
       sq_length--;

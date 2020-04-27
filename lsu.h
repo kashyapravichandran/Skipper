@@ -42,6 +42,13 @@ typedef struct {
   bool stat_load_stall_miss;  // Load stalled due to a cache miss.
   bool stat_store_stall_miss; // Store commit stalled due to a cache miss.
   bool stat_forward;    // Load received value from store in LSQ.
+  
+  // fake_retire byte 
+  
+  bool fake_retire;
+  
+  
+  
 } lsq_entry;
 
 
@@ -158,6 +165,24 @@ public:
                 unsigned int& lq_index, bool& lq_index_phase,
                 unsigned int& sq_index, bool& sq_index_phase,
 		bool mdp_stall);
+	
+	
+	// Stuff added for skipper
+	
+	 	
+	void queue_pad(unsigned int num_loads, unsigned int num_stores, unsigned int& lq_index, bool& lq_index_phase,unsigned int& sq_index, bool& sq_index_phase);
+	
+	
+	void skipped_dispatch(bool load, unsigned int size, bool left, bool right, bool is_signed,
+                unsigned int pay_index,
+                unsigned int& lq_index, bool& lq_index_phase,
+                unsigned int& sq_index, bool& sq_index_phase,
+		bool mdp_stall);
+		
+	void fake_commit ();
+		
+	// Stuff added for skipper 	
+	
 
   void store_addr(cycle_t cycle,
                   reg_t addr,

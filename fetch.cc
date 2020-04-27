@@ -3,6 +3,10 @@
 #include "CacheClass.h"
 
 
+// May have to store sequence in SIST entry or use a static variable for sist 
+
+
+
 void pipeline_t::fetch() {
    // Variables related to instruction cache.
    unsigned int line1;

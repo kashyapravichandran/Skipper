@@ -49,12 +49,19 @@ void pipeline_t::retire(size_t& instret) {
 	head_valid=REN->precommit(completed, exception, load_viol, br_misp, val_misp, load, store, branch,amo, csr, offending_PC);
 	if(head_valid && num_pmoves == SCIT->SCIT_num_output())
 	{
+		// clear the sist entry
+		 
+		// AL and PAY load buffer freeing 
 		while(!REN->AL_entry_valid())
 		{
 			REN->fake_retire();
 			if (!PAY.buf[PAY.head].split) PAY.pop();
     		PAY.pop();
        	}
+       	
+       	// Load store unit fake commit 
+       	LSU.fake_commit();
+       	
 		num_pmoves=0;
     	head_valid=REN->precommit(completed, exception, load_viol, br_misp, val_misp, load, store, branch,amo, csr, offending_PC);
 	

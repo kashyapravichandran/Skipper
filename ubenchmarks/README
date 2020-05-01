@@ -1,0 +1,4 @@
+/afs/eos.ncsu.edu/dist/riscv/bin/riscv64-unknown-elf-g++ -o sample.riscv sample.cc
+/afs/eos.ncsu.edu/dist/riscv/bin/riscv64-unknown-elf-objdump -d sample.riscv > assembly
+
+/afs/eos.ncsu.edu/dist/riscv/bin/riscv64-unknown-elf-objdump -d /afs/eos.ncsu.edu/dist/riscv/benchmarks/with-hardware-fdiv/spec2006/456.hmmer/hmmer_base.riscv | less
